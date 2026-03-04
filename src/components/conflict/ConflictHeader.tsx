@@ -107,7 +107,7 @@ const ConflictHeader = ({
     <div className="space-y-6">
       {/* Breadcrumb */}
       <p className="font-mono-label text-og-muted">
-        OGSE / CONFLICTS / {conflict.name?.toUpperCase()}
+        OGI / CONFLICTS / {conflict.name?.toUpperCase()}
       </p>
 
       {/* Title */}

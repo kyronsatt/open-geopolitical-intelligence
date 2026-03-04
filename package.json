@@ -1,7 +1,14 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "open-geopolitical-intelligence",
+  "description": "Open Geopolitical Intelligence - AI-powered conflict analysis and simulation platform",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "author": "Kyronsatt Software Development LTDA",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kyronsatt/open-geopolitical-intelligence.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

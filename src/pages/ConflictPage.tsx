@@ -97,7 +97,7 @@ const ConflictPage = () => {
           onClick={() => navigate("/")}
         >
           <span className="font-display text-xl font-extrabold tracking-tight text-foreground">
-            OGSE
+            OGI
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-og-green animate-pulse-glow" />
@@ -157,7 +157,7 @@ const ConflictPage = () => {
 
         {/* Footer */}
         <footer className="border-t border-border pt-8 text-center space-y-2">
-          <p className="font-display text-lg font-bold text-foreground">OGSE</p>
+          <p className="font-display text-lg font-bold text-foreground">OGI</p>
           <p className="font-mono-label text-og-muted">
             Data: ACLED · UCDP · World Bank · EIA &nbsp;|&nbsp; AI:
             meta-llama/llama-3.3-70b via OpenRouter

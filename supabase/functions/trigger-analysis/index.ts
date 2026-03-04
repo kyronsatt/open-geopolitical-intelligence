@@ -97,8 +97,8 @@ async function callLLMWithRetry(
           headers: {
             Authorization: `Bearer ${OPENROUTER_API_KEY}`,
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://ogse.io",
-            "X-Title": "OGSE",
+            "HTTP-Referer": "https://open-geopolitical-intelligence.io",
+            "X-Title": "OGI",
           },
           body: JSON.stringify({
             model: currentModel,
@@ -213,8 +213,8 @@ async function callLLM(schemaKey: string, event: string): Promise<any> {
       headers: {
         Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://ogse.io",
-        "X-Title": "OGSE",
+        "HTTP-Referer": "https://open-geopolitical-intelligence.io",
+        "X-Title": "OGI",
       },
       body: JSON.stringify({
         model: MODEL,

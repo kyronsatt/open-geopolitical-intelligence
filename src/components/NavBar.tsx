@@ -20,8 +20,13 @@ const NavBar = ({ conflictId }: NavBarProps) => {
         borderBottom: "1px solid hsl(var(--border-subtle))",
       }}
     >
-      <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-        <span className="font-display text-xl font-extrabold tracking-tight text-foreground">OGSE</span>
+      <div
+        className="flex items-center gap-3 cursor-pointer"
+        onClick={() => navigate("/")}
+      >
+        <span className="font-display text-xl font-extrabold tracking-tight text-foreground">
+          OGI
+        </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-og-green animate-pulse-glow" />
           <span className="font-mono-label text-og-green">LIVE</span>
