@@ -108,7 +108,7 @@ const ConflictPage = () => {
 
       <StickyDotNav sections={sections} />
 
-      <div className="pt-20 pb-16 max-w-6xl mx-auto px-4 md:px-8 space-y-24">
+      <div className="pt-20 max-w-6xl mx-auto px-4 md:px-8 space-y-16">
         {/* Banner */}
         <AnimatePresence>
           {bannerVisible && (

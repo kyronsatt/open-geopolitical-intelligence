@@ -124,7 +124,7 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
                 </span>
 
                 {/* Gauge */}
-                <div className="flex justify-center mb-3">
+                <div className="flex justify-center mb-5">
                   <div className="relative" style={{ width: 128, height: 96 }}>
                     <svg viewBox="0 0 128 100" className="w-full h-full">
                       {/* Background arc */}
@@ -140,22 +140,6 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
                         strokeLinecap="round"
                         transform={`rotate(${startAngle} ${cx} ${cy})`}
                       />
-                      {/* Confidence band */}
-                      {confLow !== confHigh && (
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r={gaugeRadius}
-                          fill="none"
-                          stroke={arcColorVal}
-                          strokeWidth={gaugeStroke + 6}
-                          strokeDasharray={`${confBandLength} ${circumference}`}
-                          strokeDashoffset={-confStartLength}
-                          strokeLinecap="round"
-                          opacity={0.12}
-                          transform={`rotate(${startAngle} ${cx} ${cy})`}
-                        />
-                      )}
                       {/* Filled arc */}
                       <motion.circle
                         cx={cx}
@@ -178,12 +162,12 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
                     {/* Center score */}
                     <div
                       className="absolute inset-0 flex flex-col items-center justify-center"
-                      style={{ top: 4 }}
+                      style={{ top: 30 }}
                     >
                       <span
-                        className={`font-display text-3xl font-bold ${scoreColor}`}
+                        className={`font-mono text-xl font-bold ${scoreColor}`}
                       >
-                        {score}
+                        {score}%
                       </span>
                       <TrendIcon className={`w-4 h-4 ${trendColor}`} />
                     </div>
@@ -196,7 +180,7 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
                     key={i}
                     className="text-xs text-muted-foreground leading-relaxed"
                   >
-                    {d}
+                    - {d}
                   </p>
                 ))}
               </GlassCard>
