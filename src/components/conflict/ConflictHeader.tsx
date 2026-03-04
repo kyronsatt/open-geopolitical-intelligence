@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import GlassCard from "@/components/GlassCard";
-import { Shield, AlertTriangle } from "lucide-react";
+import { Shield, AlertTriangle, Zap, Globe, Target, TrendingUp } from "lucide-react";
 
 interface ConflictHeaderProps {
   conflict: any;
@@ -10,12 +10,80 @@ interface ConflictHeaderProps {
   events: any[];
 }
 
+// Helper to get badge styling based on status
+const getStatusBadge = (status: string) => {
+  const statusLower = (status || "").toLowerCase();
+  if (statusLower.includes("escalat")) {
+    return { label: "⚡ ESCALATING", className: "bg-red-dim text-red-vivid" };
+  }
+  if (statusLower.includes("de-escalat") || statusLower.includes("calm")) {
+    return { label: "🕊️ DE-ESCALATING", className: "bg-og-green/20 text-og-green" };
+  }
+  if (statusLower.includes("stable")) {
+    return { label: "⚖️ STABLE", className: "bg-og-green/20 text-og-green" };
+  }
+  if (statusLower.includes("frozen") || statusLower.includes("stalemate")) {
+    return { label: "❄️ FROZEN", className: "bg-blue-vivid/20 text-blue-vivid" };
+  }
+  return { label: "⚡ ACTIVE", className: "bg-red-dim text-red-vivid" };
+};
+
+// Helper to get conflict type badge
+const getTypeBadge = (type: string) => {
+  const typeLower = (type || "").toLowerCase();
+  if (typeLower.includes("hybrid")) {
+    return { label: "🌐 HYBRID CONFLICT", icon: Globe };
+  }
+  if (typeLower.includes("military") || typeLower.includes("war")) {
+    return { label: "🎯 MILITARY", icon: Target };
+  }
+  if (typeLower.includes("economic")) {
+    return { label: "💰 ECONOMIC", icon: TrendingUp };
+  }
+  if (typeLower.includes("proxy")) {
+    return { label: "👥 PROXY CONFLICT", icon: Globe };
+  }
+  if (typeLower.includes("cyber")) {
+    return { label: "💻 CYBER", icon: Globe };
+  }
+  return { label: "⚔️ CONFLICT", icon: Zap };
+};
+
+// Helper to get intensity level
+const getIntensityInfo = (intensity: number) => {
+  const pct = Math.round((intensity || 0) * 100);
+  let level = "LOW";
+  let color = "text-og-green";
+  let bg = "bg-og-green/20";
+  
+  if (pct >= 70) {
+    level = "CRITICAL";
+    color = "text-red-vivid";
+    bg = "bg-red-dim";
+  } else if (pct >= 50) {
+    level = "HIGH";
+    color = "text-[hsl(30,100%,60%)]";
+    bg = "bg-[rgba(255,140,0,0.12)]";
+  } else if (pct >= 30) {
+    level = "MODERATE";
+    color = "text-accent-color";
+    bg = "bg-accent-dim";
+  }
+  
+  return { level, pct, color, bg };
+};
+
 const ConflictHeader = ({ conflict, snapshot, snapshotHistory, events }: ConflictHeaderProps) => {
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const triggeringEvent = snapshot?.triggered_by_event_id
     ? events.find((e: any) => e.id === snapshot.triggered_by_event_id)
     : null;
+
+  // Dynamic badges based on conflict data
+  const statusBadge = getStatusBadge(conflict.status);
+  const typeBadge = getTypeBadge(conflict.type);
+  const intensityInfo = getIntensityInfo(conflict.intensity);
 
   return (
     <div className="space-y-6">
@@ -32,17 +100,34 @@ const ConflictHeader = ({ conflict, snapshot, snapshotHistory, events }: Conflic
         {conflict.name}
       </h1>
 
-      {/* Badges */}
+      {/* Dynamic Badges */}
       <div className="flex flex-wrap gap-2">
-        <span className="font-mono-label px-3 py-1 rounded bg-red-dim text-red-vivid">
-          ⚡ ESCALATING
+        {/* Status Badge - from conflict.status */}
+        <span className={`font-mono-label px-3 py-1 rounded ${statusBadge.className}`}>
+          {statusBadge.label}
         </span>
-        <span className="font-mono-label px-3 py-1 rounded bg-[hsl(var(--bg-glass))] text-og-secondary">
-          HYBRID CONFLICT
+        
+        {/* Type Badge - from conflict.type */}
+        <span className="font-mono-label px-3 py-1 rounded bg-[hsl(var(--bg-glass))] text-og-secondary flex items-center gap-1.5">
+          {typeBadge.icon && <typeBadge.icon className="w-3.5 h-3.5" />}
+          {typeBadge.label}
         </span>
-        <span className="font-mono-label px-3 py-1 rounded bg-accent-dim text-accent-color">
-          INTENSITY {Math.round(conflict.intensity * 100)}%
+        
+        {/* Intensity Badge - from conflict.intensity */}
+        <span className={`font-mono-label px-3 py-1 rounded ${intensityInfo.bg} ${intensityInfo.color}`}>
+          INTENSITY {intensityInfo.pct}%
         </span>
+        
+        {/* Confidence Badge - from snapshot */}
+        {snapshot?.briefing?.confidence_level && (
+          <span className={`font-mono-label px-3 py-1 rounded ${
+            snapshot.briefing.confidence_level === "high" ? "bg-og-green/20 text-og-green" :
+            snapshot.briefing.confidence_level === "medium" ? "bg-accent-dim text-accent-color" :
+            "bg-red-dim text-red-vivid"
+          }`}>
+            CONFIDENCE {snapshot.briefing.confidence_level.toUpperCase()}
+          </span>
+        )}
       </div>
 
       {/* Intensity bar */}
@@ -51,7 +136,7 @@ const ConflictHeader = ({ conflict, snapshot, snapshotHistory, events }: Conflic
           className="h-full rounded-full"
           style={{ background: "linear-gradient(90deg, hsl(var(--red-vivid)), hsl(46,76%,59%))" }}
           initial={{ width: 0 }}
-          animate={{ width: `${conflict.intensity * 100}%` }}
+          animate={{ width: `${(conflict.intensity || 0) * 100}%` }}
           transition={{ duration: 1, delay: 0.3 }}
         />
       </div>

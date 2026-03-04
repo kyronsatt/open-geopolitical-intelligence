@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import GlassCard from "@/components/GlassCard";
 import * as d3Force from "d3-force";
-import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 interface CausalGraphViewProps {
   snapshot: any;
@@ -30,6 +30,7 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
   const [selected, setSelected] = useState<any>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+  const [isReady, setIsReady] = useState(false);
   const isDragging = useRef(false);
   const dragNode = useRef<any>(null);
   const panStart = useRef<{ x: number; y: number } | null>(null);
@@ -37,8 +38,10 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
 
   useEffect(() => {
     const update = () => {
-      const w = containerRef.current?.clientWidth || 800;
-      setDimensions({ width: w, height: 500 });
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth || 800;
+        setDimensions({ width: w, height: 500 });
+      }
     };
     update();
     window.addEventListener("resize", update);
@@ -47,6 +50,8 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
 
   useEffect(() => {
     if (!snapshot?.causal_graph) return;
+    setIsReady(false);
+
     const g = snapshot.causal_graph;
     const simNodes = (g.nodes || []).map((n: any, i: number) => ({
       ...n,
@@ -83,7 +88,13 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
     sim.on("tick", () => {
       setNodes([...simNodes]);
       setEdges([...simEdges]);
+      setIsReady(true);
     });
+
+    // Set initial state immediately
+    setNodes(simNodes);
+    setEdges(simEdges);
+    setIsReady(true);
 
     return () => {
       sim.stop();
@@ -94,8 +105,8 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
     (nodeId: string) => {
       const ids = new Set<string>([nodeId]);
       edges.forEach((e: any) => {
-        const sId = typeof e.source === "object" ? e.source.id : e.source;
-        const tId = typeof e.target === "object" ? e.target.id : e.target;
+        const sId = typeof e.source === "object" ? e.source?.id : e.source;
+        const tId = typeof e.target === "object" ? e.target?.id : e.target;
         if (sId === nodeId) ids.add(tId);
         if (tId === nodeId) ids.add(sId);
       });
@@ -104,22 +115,46 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
     [edges],
   );
 
-  // Zoom handler
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    setTransform((prev) => {
-      const newK = Math.max(0.3, Math.min(3, prev.k * scaleFactor));
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return { ...prev, k: newK };
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      return {
-        k: newK,
-        x: mx - (mx - prev.x) * (newK / prev.k),
-        y: my - (my - prev.y) * (newK / prev.k),
-      };
-    });
+  // Zoom functions
+  const handleZoomIn = useCallback(() => {
+    setTransform((prev) => ({
+      ...prev,
+      k: Math.min(3, prev.k * 1.2),
+    }));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setTransform((prev) => ({
+      ...prev,
+      k: Math.max(0.3, prev.k / 1.2),
+    }));
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setTransform({ x: 0, y: 0, k: 1 });
+  }, []);
+
+  // Wheel handler - use addEventListener for better control
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Only handle if not ctrl/cmd zoom (browser zoom)
+      if (e.ctrlKey || e.metaKey) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      setTransform((prev) => {
+        const newK = Math.max(0.3, Math.min(3, prev.k * scaleFactor));
+        return { ...prev, k: newK };
+      });
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
   }, []);
 
   // Pan handlers
@@ -130,8 +165,8 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
         (e.target as SVGElement).tagName === "rect"
       ) {
         panStart.current = {
-          x: e.clientX - transform.x,
-          y: e.clientY - transform.y,
+          x: e.clientX - (transform?.x ?? 0),
+          y: e.clientY - (transform?.y ?? 0),
         };
       }
     },
@@ -143,8 +178,10 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
       if (dragNode.current && simRef.current) {
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return;
-        const x = (e.clientX - rect.left - transform.x) / transform.k;
-        const y = (e.clientY - rect.top - transform.y) / transform.k;
+        const x =
+          (e.clientX - rect.left - (transform?.x ?? 0)) / (transform?.k ?? 1);
+        const y =
+          (e.clientY - rect.top - (transform?.y ?? 0)) / (transform?.k ?? 1);
         dragNode.current.fx = x;
         dragNode.current.fy = y;
         simRef.current.alpha(0.3).restart();
@@ -183,7 +220,7 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="font-display text-2xl font-bold text-foreground">
-            CAUSAL RIPPLE ANALYSIS
+            CAUSAL ANALYSIS
           </h2>
           <p className="text-sm text-muted-foreground">
             How actions propagate through the system
@@ -198,11 +235,50 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
 
   const highlightSet = hovered ? connectedIds(hovered) : null;
 
+  // Safe edge rendering with null checks
+  const renderEdge = (e: any, i: number) => {
+    const sx = typeof e.source === "object" ? (e.source?.x ?? 0) : 0;
+    const sy = typeof e.source === "object" ? (e.source?.y ?? 0) : 0;
+    const tx = typeof e.target === "object" ? (e.target?.x ?? 0) : 0;
+    const ty = typeof e.target === "object" ? (e.target?.y ?? 0) : 0;
+    const sId = typeof e.source === "object" ? e.source?.id : e.source;
+    const tId = typeof e.target === "object" ? e.target?.id : e.target;
+
+    if (sx === 0 && sy === 0 && tx === 0 && ty === 0) return null;
+
+    const visible =
+      !highlightSet || (highlightSet.has(sId) && highlightSet.has(tId));
+    const strokeW =
+      e.strength === "strong" ? 2 : e.strength === "moderate" ? 1.5 : 1;
+    const dash =
+      e.strength === "moderate"
+        ? "4,4"
+        : e.strength === "weak"
+          ? "2,4"
+          : undefined;
+
+    return (
+      <line
+        key={i}
+        x1={sx}
+        y1={sy}
+        x2={tx}
+        y2={ty}
+        stroke="rgba(255,255,255,0.2)"
+        strokeWidth={strokeW}
+        strokeDasharray={dash}
+        opacity={visible ? 1 : 0.1}
+        markerEnd={e.strength === "strong" ? "url(#arrow)" : undefined}
+        style={{ transition: "opacity 0.2s" }}
+      />
+    );
+  };
+
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="font-mono-label text-og-secondary">
-          CAUSAL RIPPLE ANALYSIS
+      <div className="border-b border-border pb-2">
+        <h2 className="font-display text-2xl font-bold text-foreground">
+          CAUSAL ANALYSIS
         </h2>
         <p className="text-sm text-muted-foreground">
           How actions propagate through the system · Scroll to zoom · Drag to
@@ -210,14 +286,49 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
         </p>
       </div>
 
-      <div className="flex gap-4" ref={containerRef}>
-        <GlassCard className="flex-1 p-0 overflow-hidden relative">
+      <div className="flex gap-4">
+        <GlassCard
+          className="flex-1 p-0 overflow-hidden relative"
+          ref={containerRef}
+          onWheel={(e) => e.preventDefault()}
+        >
+          {/* Zoom Controls - Top Right Corner */}
+          <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+            <button
+              onClick={handleZoomIn}
+              className="p-2 rounded-md bg-surface/90 hover:bg-surface border border-border text-og-secondary hover:text-foreground transition-colors"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="p-2 rounded-md bg-surface/90 hover:bg-surface border border-border text-og-secondary hover:text-foreground transition-colors"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleReset}
+              className="p-2 rounded-md bg-surface/90 hover:bg-surface border border-border text-og-secondary hover:text-foreground transition-colors"
+              title="Reset View"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Scale Indicator - Bottom Right */}
+          <div className="absolute bottom-3 right-3 z-10">
+            <span className="font-mono-label text-xs text-og-secondary bg-surface/90 px-2 py-1 rounded border border-border">
+              {Math.round((transform?.k ?? 1) * 100)}%
+            </span>
+          </div>
+
           <svg
             ref={svgRef}
             width={dimensions.width}
             height={dimensions.height}
             style={{ cursor: panStart.current ? "grabbing" : "grab" }}
-            onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -242,95 +353,52 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
               </marker>
             </defs>
             <g
-              transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}
+              transform={`translate(${transform?.x ?? 0},${transform?.y ?? 0}) scale(${transform?.k ?? 1})`}
             >
-              {edges.map((e: any, i: number) => {
-                const sx = typeof e.source === "object" ? e.source.x : 0;
-                const sy = typeof e.source === "object" ? e.source.y : 0;
-                const tx = typeof e.target === "object" ? e.target.x : 0;
-                const ty = typeof e.target === "object" ? e.target.y : 0;
-                const sId =
-                  typeof e.source === "object" ? e.source.id : e.source;
-                const tId =
-                  typeof e.target === "object" ? e.target.id : e.target;
-                const visible =
-                  !highlightSet ||
-                  (highlightSet.has(sId) && highlightSet.has(tId));
-                const strokeW =
-                  e.strength === "strong"
-                    ? 2
-                    : e.strength === "moderate"
-                      ? 1.5
-                      : 1;
-                const dash =
-                  e.strength === "moderate"
-                    ? "4,4"
-                    : e.strength === "weak"
-                      ? "2,4"
-                      : undefined;
-                return (
-                  <line
-                    key={i}
-                    x1={sx}
-                    y1={sy}
-                    x2={tx}
-                    y2={ty}
-                    stroke="rgba(255,255,255,0.2)"
-                    strokeWidth={strokeW}
-                    strokeDasharray={dash}
-                    opacity={visible ? 1 : 0.1}
-                    markerEnd={
-                      e.strength === "strong" ? "url(#arrow)" : undefined
-                    }
-                    style={{ transition: "opacity 0.2s" }}
-                  />
-                );
-              })}
-              {nodes.map((n: any) => {
-                const r = NODE_RADIUS[n.category] || 8;
-                const color = NODE_COLORS[n.category] || "#888";
-                const visible = !highlightSet || highlightSet.has(n.id);
-                return (
-                  <g
-                    key={n.id}
-                    transform={`translate(${n.x},${n.y})`}
-                    style={{ cursor: "grab", transition: "opacity 0.2s" }}
-                    opacity={visible ? 1 : 0.1}
-                    onMouseEnter={() => setHovered(n.id)}
-                    onMouseLeave={() => setHovered(null)}
-                    onClick={() => setSelected(n)}
-                    onMouseDown={(e) => startDragNode(e, n)}
-                  >
-                    <circle r={r} fill={color} />
-                    {hovered === n.id && (
-                      <circle
-                        r={r + 4}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth={1}
-                        opacity={0.4}
-                      />
-                    )}
-                    <text
-                      y={r + 14}
-                      textAnchor="middle"
-                      fill="hsl(var(--text-secondary))"
-                      fontSize={10}
-                      fontFamily="JetBrains Mono"
+              {/* Edges */}
+              {isReady && edges.map((e: any, i: number) => renderEdge(e, i))}
+
+              {/* Nodes */}
+              {isReady &&
+                nodes.map((n: any) => {
+                  const r = NODE_RADIUS[n.category] || 8;
+                  const color = NODE_COLORS[n.category] || "#888";
+                  const visible = !highlightSet || highlightSet.has(n.id);
+                  if (n.x === undefined || n.y === undefined) return null;
+
+                  return (
+                    <g
+                      key={n.id}
+                      transform={`translate(${n.x},${n.y})`}
+                      style={{ cursor: "grab", transition: "opacity 0.2s" }}
+                      opacity={visible ? 1 : 0.1}
+                      onMouseEnter={() => setHovered(n.id)}
+                      onMouseLeave={() => setHovered(null)}
+                      onClick={() => setSelected(n)}
+                      onMouseDown={(e) => startDragNode(e, n)}
                     >
-                      {n.label?.slice(0, 20)}
-                    </text>
-                    {/* Tooltip on hover */}
-                    {hovered === n.id && n.description && (
-                      <foreignObject x={r + 8} y={-20} width={200} height={60}>
-                        <div className="bg-surface border border-border rounded px-2 py-1 text-[10px] text-muted-foreground shadow-lg">
-                          {n.description?.slice(0, 100)}
-                        </div>
-                      </foreignObject>
-                    )}
-                  </g>
-                );
-              })}
+                      <circle r={r} fill={color} />
+                      {hovered === n.id && (
+                        <circle
+                          r={r + 4}
+                          fill="none"
+                          stroke={color}
+                          strokeWidth={1}
+                          opacity={0.4}
+                        />
+                      )}
+                      <text
+                        y={r + 14}
+                        textAnchor="middle"
+                        fill="hsl(var(--text-secondary))"
+                        fontSize={10}
+                        fontFamily="JetBrains Mono"
+                      >
+                        {n.label?.slice(0, 20)}
+                      </text>
+                    </g>
+                  );
+                })}
             </g>
           </svg>
         </GlassCard>
@@ -363,16 +431,16 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
             {edges
               .filter((e: any) => {
                 const sId =
-                  typeof e.source === "object" ? e.source.id : e.source;
+                  typeof e.source === "object" ? e.source?.id : e.source;
                 const tId =
-                  typeof e.target === "object" ? e.target.id : e.target;
+                  typeof e.target === "object" ? e.target?.id : e.target;
                 return sId === selected.id || tId === selected.id;
               })
               .map((e: any, i: number) => {
                 const sId =
-                  typeof e.source === "object" ? e.source.id : e.source;
+                  typeof e.source === "object" ? e.source?.id : e.source;
                 const tId =
-                  typeof e.target === "object" ? e.target.id : e.target;
+                  typeof e.target === "object" ? e.target?.id : e.target;
                 const other = sId === selected.id ? tId : sId;
                 const otherNode = nodes.find((n: any) => n.id === other);
                 return (

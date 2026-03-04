@@ -52,15 +52,19 @@ const TimelineView = ({ events }: TimelineViewProps) => {
   return (
     <div className="space-y-6">
       <div className="border-b border-border pb-2">
-        <h2 className="font-display text-2xl font-bold text-foreground">CONFLICT TIMELINE</h2>
-        <p className="text-sm text-muted-foreground mt-1">Historical events and their progression</p>
+        <h2 className="font-display text-2xl font-bold text-foreground">
+          CONFLICT TIMELINE
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Historical events and their progression
+        </p>
       </div>
 
       {/* Desktop horizontal */}
       <div className="hidden md:block overflow-x-auto pb-4">
         <div className="relative flex items-start gap-0 min-w-max px-4">
           <div
-            className="absolute top-[22px] left-0 right-0 h-[2px]"
+            className="absolute top-[32px] left-0 right-0 h-[2px]"
             style={{ background: "hsl(var(--border-default))" }}
           />
           {events.map((ev: any, i: number) => {
@@ -76,7 +80,9 @@ const TimelineView = ({ events }: TimelineViewProps) => {
                 className="flex flex-col items-center cursor-pointer min-w-[120px] relative"
                 onClick={() => setExpanded(expanded === ev.id ? null : ev.id)}
               >
-                <span className="font-mono-label text-[10px] text-og-muted mb-2">{ev.date}</span>
+                <span className="font-mono-label text-[10px] text-og-muted mb-2">
+                  {ev.date}
+                </span>
                 <div className="relative z-10">
                   <div
                     className="rounded-full"
@@ -88,7 +94,7 @@ const TimelineView = ({ events }: TimelineViewProps) => {
                     }}
                   />
                 </div>
-                <span className="font-display text-xs font-semibold text-foreground mt-2 text-center max-w-[110px] leading-tight">
+                <span className="font-base text-xs font-semibold text-foreground mt-2 text-center max-w-[110px] leading-tight">
                   {ev.title}
                 </span>
               </motion.div>
@@ -117,12 +123,19 @@ const TimelineView = ({ events }: TimelineViewProps) => {
                   style={{ width: size, height: size, background: color }}
                 />
                 {i < events.length - 1 && (
-                  <div className="w-[2px] flex-1 mt-1" style={{ background: "hsl(var(--border-default))" }} />
+                  <div
+                    className="w-[2px] flex-1 mt-1"
+                    style={{ background: "hsl(var(--border-default))" }}
+                  />
                 )}
               </div>
               <div>
-                <span className="font-mono-label text-[10px] text-og-muted">{ev.date}</span>
-                <p className="font-display text-sm font-semibold text-foreground">{ev.title}</p>
+                <span className="font-mono-label text-[10px] text-og-muted">
+                  {ev.date}
+                </span>
+                <p className="font-display text-sm font-semibold text-foreground">
+                  {ev.title}
+                </p>
               </div>
             </motion.div>
           );
@@ -130,38 +143,47 @@ const TimelineView = ({ events }: TimelineViewProps) => {
       </div>
 
       {/* Expanded card */}
-      {expanded && (() => {
-        const ev = events.find((e: any) => e.id === expanded);
-        if (!ev) return null;
-        const sources = ev.sources || [];
-        return (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <GlassCard>
-              <div className="flex items-center gap-2 mb-2">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ background: getColor(ev.category) }}
-                />
-                <span className="font-mono-label text-og-secondary">{ev.category.toUpperCase()}</span>
-                <span className="font-mono-label text-og-muted">{ev.date}</span>
-              </div>
-              <h3 className="font-display text-lg font-bold text-foreground mb-2">{ev.title}</h3>
-              <p className="text-sm text-muted-foreground mb-3">{ev.description}</p>
-              {sources.length > 0 && (
-                <div className="flex gap-2 flex-wrap">
-                  {sources.map((s: any, i: number) => (
-                    <SourceBadge key={i} source={s} />
-                  ))}
+      {expanded &&
+        (() => {
+          const ev = events.find((e: any) => e.id === expanded);
+          if (!ev) return null;
+          const sources = ev.sources || [];
+          return (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <GlassCard>
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ background: getColor(ev.category) }}
+                  />
+                  <span className="font-mono-label text-og-secondary">
+                    {ev.category.toUpperCase()}
+                  </span>
+                  <span className="font-mono-label text-og-muted">
+                    {ev.date}
+                  </span>
                 </div>
-              )}
-            </GlassCard>
-          </motion.div>
-        );
-      })()}
+                <h3 className="font-display text-lg font-bold text-foreground mb-2">
+                  {ev.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {ev.description}
+                </p>
+                {sources.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {sources.map((s: any, i: number) => (
+                      <SourceBadge key={i} source={s} />
+                    ))}
+                  </div>
+                )}
+              </GlassCard>
+            </motion.div>
+          );
+        })()}
     </div>
   );
 };
