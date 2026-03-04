@@ -1,0 +1,4 @@
+project_id = "ipnpjijfuvxccsoyizpv"
+
+[functions.trigger-analysis]
+verify_jwt = false
