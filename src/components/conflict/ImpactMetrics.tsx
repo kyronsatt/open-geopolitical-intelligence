@@ -7,11 +7,31 @@ interface ImpactMetricsProps {
 }
 
 const METRICS = [
-  { key: "domestic_stability_usa", label: "US DOMESTIC STABILITY", reversed: true },
-  { key: "domestic_stability_iran", label: "IRAN DOMESTIC STABILITY", reversed: true },
-  { key: "regional_destabilization", label: "REGIONAL DESTABILIZATION", reversed: false },
-  { key: "global_economic_shock", label: "GLOBAL ECONOMIC SHOCK", reversed: false },
-  { key: "energy_market_disruption", label: "ENERGY MARKET DISRUPTION", reversed: false },
+  {
+    key: "domestic_stability_usa",
+    label: "US DOMESTIC STABILITY",
+    reversed: true,
+  },
+  {
+    key: "domestic_stability_iran",
+    label: "IRAN DOMESTIC STABILITY",
+    reversed: true,
+  },
+  {
+    key: "regional_destabilization",
+    label: "REGIONAL DESTABILIZATION",
+    reversed: false,
+  },
+  {
+    key: "global_economic_shock",
+    label: "GLOBAL ECONOMIC SHOCK",
+    reversed: false,
+  },
+  {
+    key: "energy_market_disruption",
+    label: "ENERGY MARKET DISRUPTION",
+    reversed: false,
+  },
   { key: "alliance_stress", label: "ALLIANCE STRESS", reversed: false },
 ];
 
@@ -21,8 +41,16 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
   const impact = snapshot.impact;
 
   return (
-    <div className="space-y-4">
-      <h2 className="font-mono-label text-og-secondary">SYSTEMIC IMPACT ASSESSMENT</h2>
+    <div className="space-y-6">
+      <div className="border-b border-border pb-2">
+        <h2 className="font-display text-2xl font-bold text-foreground">
+          SYSTEMIC IMPACT ASSESSMENT
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Quantitative analysis of conflict consequences
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {METRICS.map((m, idx) => {
           const data = impact[m.key];
@@ -30,20 +58,39 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
           const score = data.score ?? 0;
           const isGood = m.reversed ? score >= 60 : score <= 30;
           const isBad = m.reversed ? score <= 30 : score >= 60;
-          const scoreColor = isGood ? "text-og-green" : isBad ? "text-red-vivid" : "text-accent-color";
-          const arcColorVal = isGood ? "hsl(var(--green-vivid))" : isBad ? "hsl(var(--red-vivid))" : "hsl(var(--accent))";
-          const TrendIcon = data.trend === "up" || data.trend === "increasing"
-            ? TrendingUp
-            : data.trend === "down" || data.trend === "decreasing"
-            ? TrendingDown
-            : Minus;
-          const trendColor = (data.trend === "up" || data.trend === "increasing")
-            ? (m.reversed ? "text-og-green" : "text-red-vivid")
-            : (data.trend === "down" || data.trend === "decreasing")
-            ? (m.reversed ? "text-red-vivid" : "text-og-green")
-            : "text-og-secondary";
+          const scoreColor = isGood
+            ? "text-og-green"
+            : isBad
+              ? "text-red-vivid"
+              : "text-accent-color";
+          const arcColorVal = isGood
+            ? "hsl(var(--green-vivid))"
+            : isBad
+              ? "hsl(var(--red-vivid))"
+              : "hsl(var(--accent))";
+          const TrendIcon =
+            data.trend === "up" || data.trend === "increasing"
+              ? TrendingUp
+              : data.trend === "down" || data.trend === "decreasing"
+                ? TrendingDown
+                : Minus;
+          const trendColor =
+            data.trend === "up" || data.trend === "increasing"
+              ? m.reversed
+                ? "text-og-green"
+                : "text-red-vivid"
+              : data.trend === "down" || data.trend === "decreasing"
+                ? m.reversed
+                  ? "text-red-vivid"
+                  : "text-og-green"
+                : "text-og-secondary";
 
-          const drivers = data.drivers || data.primary_channels || data.mechanisms || data.stressed_alliances || [];
+          const drivers =
+            data.drivers ||
+            data.primary_channels ||
+            data.mechanisms ||
+            data.stressed_alliances ||
+            [];
 
           // Gauge calculations
           const gaugeRadius = 52;
@@ -72,69 +119,63 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
               viewport={{ once: true }}
             >
               <GlassCard>
-                <span className="font-mono-label text-og-secondary block mb-3">{m.label}</span>
-                
-                {/* Gauge */}
-                <div className="flex justify-center mb-3">
-                  <div className="relative" style={{ width: 128, height: 96 }}>
-                    <svg viewBox="0 0 128 100" className="w-full h-full">
-                      {/* Background arc */}
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={gaugeRadius}
-                        fill="none"
-                        stroke="hsl(var(--bg-surface))"
-                        strokeWidth={gaugeStroke}
-                        strokeDasharray={`${arcLength} ${circumference}`}
-                        strokeDashoffset={0}
-                        strokeLinecap="round"
-                        transform={`rotate(${startAngle} ${cx} ${cy})`}
-                      />
-                      {/* Confidence band */}
-                      {confLow !== confHigh && (
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r={gaugeRadius}
-                          fill="none"
-                          stroke={arcColorVal}
-                          strokeWidth={gaugeStroke + 6}
-                          strokeDasharray={`${confBandLength} ${circumference}`}
-                          strokeDashoffset={-confStartLength}
-                          strokeLinecap="round"
-                          opacity={0.12}
-                          transform={`rotate(${startAngle} ${cx} ${cy})`}
-                        />
-                      )}
-                      {/* Filled arc */}
-                      <motion.circle
-                        cx={cx}
-                        cy={cy}
-                        r={gaugeRadius}
-                        fill="none"
-                        stroke={arcColorVal}
-                        strokeWidth={gaugeStroke}
-                        strokeLinecap="round"
-                        strokeDasharray={`${arcLength} ${circumference}`}
-                        transform={`rotate(${startAngle} ${cx} ${cy})`}
-                        initial={{ strokeDashoffset: arcLength }}
-                        whileInView={{ strokeDashoffset: arcLength - filledLength }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        viewport={{ once: true }}
-                      />
-                    </svg>
-                    {/* Center score */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ top: 4 }}>
-                      <span className={`font-display text-3xl font-bold ${scoreColor}`}>{score}</span>
-                      <TrendIcon className={`w-4 h-4 ${trendColor}`} />
-                    </div>
-                  </div>
+                <span className="font-mono-label text-og-secondary block mb-3 text-xs">
+                  {m.label}
+                </span>
+                <div className="flex items-end gap-3 mb-3">
+                  <span
+                    className={`font-display text-5xl font-bold ${scoreColor}`}
+                  >
+                    {score}
+                  </span>
+                  <span
+                    className={`font-mono-label ${scoreColor} text-lg mb-2`}
+                  >
+                    %
+                  </span>
+                  <TrendIcon className={`w-5 h-5 ${trendColor} mb-2`} />
                 </div>
-
+                {/* Thermometer */}
+                <div className="relative w-1 h-20 rounded-full bg-surface overflow-hidden mb-3">
+                  <motion.div
+                    className={`absolute bottom-0 w-full rounded-full ${barColor}`}
+                    initial={{ height: 0 }}
+                    whileInView={{ height: `${score}%` }}
+                    transition={{ duration: 0.8 }}
+                    viewport={{ once: true }}
+                  />
+                  {data.confidence_low != null &&
+                    data.confidence_high != null && (
+                      <div
+                        className="absolute w-full opacity-30 rounded-full"
+                        style={{
+                          bottom: `${data.confidence_low}%`,
+                          height: `${data.confidence_high - data.confidence_low}%`,
+                          background: isGood
+                            ? "hsl(var(--green-vivid))"
+                            : isBad
+                              ? "hsl(var(--red-vivid))"
+                              : "hsl(var(--accent))",
+                        }}
+                      />
+                    )}
+                </div>
+                {/* Confidence range */}
+                {data.confidence_low != null &&
+                  data.confidence_high != null && (
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Confidence: {data.confidence_low}% -{" "}
+                      {data.confidence_high}%
+                    </p>
+                  )}
                 {/* Drivers */}
                 {drivers.slice(0, 3).map((d: string, i: number) => (
-                  <p key={i} className="text-xs text-muted-foreground leading-relaxed">{d}</p>
+                  <p
+                    key={i}
+                    className="text-xs text-muted-foreground leading-relaxed"
+                  >
+                    {d}
+                  </p>
                 ))}
               </GlassCard>
             </motion.div>

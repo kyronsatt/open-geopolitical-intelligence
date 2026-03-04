@@ -9,7 +9,10 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
   if (!snapshot?.briefing) {
     return (
       <div className="space-y-4">
-        <h2 className="font-mono-label text-og-secondary">CURRENT SITUATION ASSESSMENT</h2>
+        <div className="border-b border-border pb-2">
+          <h2 className="font-display text-2xl font-bold text-foreground">CURRENT SITUATION ASSESSMENT</h2>
+          <p className="text-sm text-muted-foreground mt-1">Executive summary of the conflict analysis</p>
+        </div>
         <GlassCard className="text-center py-12">
           <p className="font-mono-label text-og-muted mb-2">NO ANALYSIS AVAILABLE</p>
           <p className="text-sm text-muted-foreground">
@@ -25,8 +28,8 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <h2 className="font-mono-label text-og-secondary">CURRENT SITUATION ASSESSMENT</h2>
+      <div className="border-b border-border pb-2 flex items-center gap-3">
+        <h2 className="font-display text-2xl font-bold text-foreground">CURRENT SITUATION ASSESSMENT</h2>
         <span className="font-mono-label px-2 py-0.5 rounded bg-accent-dim text-accent-color text-[10px]">
           AI GENERATED
         </span>
@@ -47,7 +50,7 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Military */}
         <GlassCard>
-          <span className="font-mono-label text-og-secondary block mb-3">MILITARY POSTURE</span>
+          <span className="font-display text-lg font-bold text-foreground block mb-3">MILITARY POSTURE</span>
           {["usa", "iran"].map(side => {
             const data = b.military_posture?.[side];
             if (!data) return null;
@@ -67,7 +70,7 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
 
         {/* Economic */}
         <GlassCard>
-          <span className="font-mono-label text-og-secondary block mb-3">ECONOMIC MEASURES</span>
+          <span className="font-display text-lg font-bold text-foreground block mb-3">ECONOMIC MEASURES</span>
           {b.economic_measures?.active_sanctions && (
             <p className="font-display text-5xl font-bold text-accent-color mb-2">
               {b.economic_measures.active_sanctions.length}
@@ -80,7 +83,7 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
 
         {/* Diplomatic */}
         <GlassCard>
-          <span className="font-mono-label text-og-secondary block mb-3">DIPLOMATIC STATUS</span>
+          <span className="font-display text-lg font-bold text-foreground block mb-3">DIPLOMATIC STATUS</span>
           <p className="font-mono-label text-[10px] text-accent-color mb-2">
             TONE: {b.diplomatic_status?.current_tone?.toUpperCase()}
           </p>
@@ -115,7 +118,7 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
             const barColor = level > 70 ? "bg-og-red" : level > 40 ? "bg-og-accent" : "bg-og-green";
             return (
               <GlassCard key={side}>
-                <span className="font-mono-label text-og-secondary block mb-2">
+                <span className="font-display text-lg font-bold text-foreground block mb-2">
                   {side.toUpperCase()} INTERNAL PRESSURE
                 </span>
                 <div className="flex items-center gap-3 mb-2">
@@ -127,7 +130,7 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
                       transition={{ duration: 1 }}
                     />
                   </div>
-                  <span className="font-mono-label text-foreground">{level}</span>
+                  <span className="font-mono-label text-foreground">{level}%</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{data.political_pressure || data.regime_stability}</p>
               </GlassCard>

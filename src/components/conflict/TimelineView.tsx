@@ -50,8 +50,11 @@ const TimelineView = ({ events }: TimelineViewProps) => {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
-    <div className="space-y-4">
-      <h2 className="font-mono-label text-og-secondary">CONFLICT TIMELINE</h2>
+    <div className="space-y-6">
+      <div className="border-b border-border pb-2">
+        <h2 className="font-display text-2xl font-bold text-foreground">CONFLICT TIMELINE</h2>
+        <p className="text-sm text-muted-foreground mt-1">Historical events and their progression</p>
+      </div>
 
       {/* Desktop horizontal */}
       <div className="hidden md:block overflow-x-auto pb-4">
