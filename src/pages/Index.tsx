@@ -12,27 +12,54 @@ const Index = () => {
   const GlobeRef = useRef<any>(null);
   const [GlobeComponent, setGlobeComponent] = useState<any>(null);
   const [geoJson, setGeoJson] = useState<any>(null);
-
+  const [capitals, setCapitals] = useState<any[]>([]);
   useEffect(() => {
-    seedIfEmpty().then(id => {
+    seedIfEmpty().then((id) => {
       setConflictId(id);
       setLoading(false);
     });
   }, []);
 
   useEffect(() => {
-    import("react-globe.gl").then(mod => {
+    import("react-globe.gl").then((mod) => {
       setGlobeComponent(() => mod.default);
     });
+  }, []);
+
+  useEffect(() => {
+    fetch("/worldcities.csv")
+      .then((res) => res.text())
+      .then((text) => {
+        console.log("====dsads", text);
+        const rows = text.split("\n").slice(1); // remove header
+
+        const parsed = rows
+          .map((row) => {
+            const cols = row.split(",");
+            if (cols.length < 4) return null;
+
+            return {
+              label: cols[1], // Capital
+              lat: parseFloat(cols[2]),
+              lng: parseFloat(cols[3]),
+            };
+          })
+          .filter(Boolean);
+
+        setCapitals(parsed);
+      });
   }, []);
 
   // Load GeoJSON for country polygons
   useEffect(() => {
     fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
-      .then(r => r.json())
-      .then(topology => {
-        import("topojson-client").then(topojsonClient => {
-          const countries = topojsonClient.feature(topology, topology.objects.countries);
+      .then((r) => r.json())
+      .then((topology) => {
+        import("topojson-client").then((topojsonClient) => {
+          const countries = topojsonClient.feature(
+            topology,
+            topology.objects.countries,
+          );
           setGeoJson(countries);
         });
       });
@@ -53,17 +80,30 @@ const Index = () => {
   ];
 
   const pointsData = [
-    { lat: 38.9, lng: -77, size: 0.6, color: "hsl(0,100%,63%)", label: "Washington DC" },
-    { lat: 32.4, lng: 53.7, size: 0.6, color: "hsl(0,100%,63%)", label: "Tehran" },
+    {
+      lat: 38.9,
+      lng: -77,
+      size: 0.6,
+      color: "hsl(0,100%,63%)",
+      label: "Washington DC",
+    },
+    {
+      lat: 32.4,
+      lng: 53.7,
+      size: 0.6,
+      color: "hsl(0,100%,63%)",
+      label: "Tehran",
+    },
   ];
 
   return (
-    <div className="relative min-h-screen bg-base overflow-hidden">
+    <div className="relative min-h-screen bg-base overflow-visible">
       {/* Radial gradient bg */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse at center, rgba(232,197,71,0.03) 0%, transparent 70%)",
+          background:
+            "radial-gradient(ellipse at center, rgba(232,197,71,0.03) 0%, transparent 70%)",
         }}
       />
 
@@ -79,35 +119,46 @@ const Index = () => {
         {GlobeComponent && (
           <GlobeComponent
             ref={GlobeRef}
-            globeImageUrl=""
-            backgroundColor="rgba(0,0,0,0)"
-            showGlobe={true}
+            globeImageUrl="https://unpkg.com/three-globe/example/img/earth-dark.jpg"
+            backgroundColor="rgb(8,8,16)"
             showAtmosphere={true}
             atmosphereColor="rgb(232,197,71)"
-            atmosphereAltitude={0.12}
-            width={typeof window !== 'undefined' ? Math.min(window.innerWidth, 800) : 800}
-            height={typeof window !== 'undefined' ? Math.min(window.innerHeight, 800) : 800}
-            // Country polygons
+            atmosphereAltitude={0.15}
+            width={window.innerWidth}
+            height={window.innerHeight}
             polygonsData={geoJson?.features || []}
-            polygonCapColor={() => "rgba(14,14,26,0.95)"}
-            polygonSideColor={() => "rgba(232,197,71,0.05)"}
-            polygonStrokeColor={() => "rgba(232,197,71,0.15)"}
-            polygonAltitude={0.005}
-            // Arcs
-            arcsData={arcsData}
-            arcColor="color"
-            arcDashLength={0.4}
-            arcDashGap={0.2}
-            arcDashAnimateTime={2000}
-            arcStroke={1.5}
-            // Points
-            pointsData={pointsData}
-            pointAltitude={0.01}
-            pointRadius="size"
-            pointColor="color"
+            polygonCapColor={() => "rgba(0,0,0,0)"}
+            polygonSideColor={() => "rgba(232,197,71,0.3)"}
+            polygonStrokeColor={() => "rgba(232,197,71,0.1)"}
+            polygonAltitude={0.001}
+            polygonLabel={(d: any) => `
+              <div style="
+                background: rgba(14,14,26,0.95);
+                padding: 6px 10px;
+                border-radius: 8px;
+                color: rgb(232,197,71);
+                font-size: 13px;
+              ">
+                ${d.properties.name}
+              </div>
+            `}
+            onPolygonClick={goToConflict}
+            // Capitals
+            pointsData={capitals}
+            pointAltitude={0.001}
+            pointRadius={0.25}
+            pointColor={() => "rgb(232,197,71)"}
             pointLabel="label"
             onPointClick={goToConflict}
-            onArcClick={goToConflict}
+            // Airline-style arcs
+            arcsData={arcsData}
+            arcColor={() => "hsl(0,100%,63%)"}
+            arcStroke={0.2}
+            arcAltitude={0.25}
+            arcAltitudeAutoScale={0.6}
+            arcDashLength={0.005}
+            arcDashGap={0.01}
+            arcDashAnimateTime={7000}
             enablePointerInteraction={true}
           />
         )}
@@ -121,14 +172,16 @@ const Index = () => {
         className="absolute bottom-8 left-8 z-10 max-w-xs"
       >
         <GlassCard className="cursor-pointer" onClick={goToConflict}>
-          <span className="font-mono-label text-og-secondary block mb-3">MONITORED CONFLICTS</span>
+          <span className="font-mono-label text-og-secondary block mb-3">
+            MONITORED CONFLICTS
+          </span>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-lg">🇺🇸 USA — 🇮🇷 IRAN</span>
             <span className="font-mono-label px-2 py-0.5 rounded bg-red-dim text-red-vivid animate-pulse-glow">
               ESCALATING
             </span>
           </div>
-          <div className="w-full h-1 rounded-full bg-surface overflow-hidden">
+          <div className="w-full h-1 rounded-full bg-surface overflow-visible">
             <motion.div
               className="h-full rounded-full"
               style={{ background: "hsl(var(--red-vivid))" }}
@@ -137,7 +190,9 @@ const Index = () => {
               transition={{ delay: 0.8, duration: 1 }}
             />
           </div>
-          <span className="font-mono-label text-og-muted mt-1 block">INTENSITY 82%</span>
+          <span className="font-mono-label text-og-muted mt-1 block">
+            INTENSITY 82%
+          </span>
         </GlassCard>
       </motion.div>
 
@@ -149,7 +204,9 @@ const Index = () => {
         className="absolute bottom-8 right-8 z-10 max-w-xs"
       >
         <GlassCard className="cursor-pointer" onClick={goToConflict}>
-          <span className="font-mono-label text-og-secondary block mb-2">FEATURED ANALYSIS</span>
+          <span className="font-mono-label text-og-secondary block mb-2">
+            FEATURED ANALYSIS
+          </span>
           <h3 className="font-display text-lg font-bold text-foreground mb-2">
             US–Iran Escalation Dynamics
           </h3>
