@@ -119,55 +119,77 @@ const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
               viewport={{ once: true }}
             >
               <GlassCard>
-                <span className="font-mono-label text-og-secondary block mb-3 text-xs">
+                <span className="font-mono-label text-og-secondary block mb-3">
                   {m.label}
                 </span>
-                <div className="flex items-end gap-3 mb-3">
-                  <span
-                    className={`font-display text-5xl font-bold ${scoreColor}`}
-                  >
-                    {score}
-                  </span>
-                  <span
-                    className={`font-mono-label ${scoreColor} text-lg mb-2`}
-                  >
-                    %
-                  </span>
-                  <TrendIcon className={`w-5 h-5 ${trendColor} mb-2`} />
-                </div>
-                {/* Thermometer */}
-                <div className="relative w-1 h-20 rounded-full bg-surface overflow-hidden mb-3">
-                  <motion.div
-                    className={`absolute bottom-0 w-full rounded-full ${barColor}`}
-                    initial={{ height: 0 }}
-                    whileInView={{ height: `${score}%` }}
-                    transition={{ duration: 0.8 }}
-                    viewport={{ once: true }}
-                  />
-                  {data.confidence_low != null &&
-                    data.confidence_high != null && (
-                      <div
-                        className="absolute w-full opacity-30 rounded-full"
-                        style={{
-                          bottom: `${data.confidence_low}%`,
-                          height: `${data.confidence_high - data.confidence_low}%`,
-                          background: isGood
-                            ? "hsl(var(--green-vivid))"
-                            : isBad
-                              ? "hsl(var(--red-vivid))"
-                              : "hsl(var(--accent))",
-                        }}
+
+                {/* Gauge */}
+                <div className="flex justify-center mb-3">
+                  <div className="relative" style={{ width: 128, height: 96 }}>
+                    <svg viewBox="0 0 128 100" className="w-full h-full">
+                      {/* Background arc */}
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={gaugeRadius}
+                        fill="none"
+                        stroke="hsl(var(--bg-surface))"
+                        strokeWidth={gaugeStroke}
+                        strokeDasharray={`${arcLength} ${circumference}`}
+                        strokeDashoffset={0}
+                        strokeLinecap="round"
+                        transform={`rotate(${startAngle} ${cx} ${cy})`}
                       />
-                    )}
+                      {/* Confidence band */}
+                      {confLow !== confHigh && (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={gaugeRadius}
+                          fill="none"
+                          stroke={arcColorVal}
+                          strokeWidth={gaugeStroke + 6}
+                          strokeDasharray={`${confBandLength} ${circumference}`}
+                          strokeDashoffset={-confStartLength}
+                          strokeLinecap="round"
+                          opacity={0.12}
+                          transform={`rotate(${startAngle} ${cx} ${cy})`}
+                        />
+                      )}
+                      {/* Filled arc */}
+                      <motion.circle
+                        cx={cx}
+                        cy={cy}
+                        r={gaugeRadius}
+                        fill="none"
+                        stroke={arcColorVal}
+                        strokeWidth={gaugeStroke}
+                        strokeLinecap="round"
+                        strokeDasharray={`${arcLength} ${circumference}`}
+                        transform={`rotate(${startAngle} ${cx} ${cy})`}
+                        initial={{ strokeDashoffset: arcLength }}
+                        whileInView={{
+                          strokeDashoffset: arcLength - filledLength,
+                        }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        viewport={{ once: true }}
+                      />
+                    </svg>
+                    {/* Center score */}
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center"
+                      style={{ top: 4 }}
+                    >
+                      <span
+                        className={`font-display text-3xl font-bold ${scoreColor}`}
+                      >
+                        {score}
+                      </span>
+                      <TrendIcon className={`w-4 h-4 ${trendColor}`} />
+                    </div>
+                  </div>
                 </div>
-                {/* Confidence range */}
-                {data.confidence_low != null &&
-                  data.confidence_high != null && (
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Confidence: {data.confidence_low}% -{" "}
-                      {data.confidence_high}%
-                    </p>
-                  )}
+
                 {/* Drivers */}
                 {drivers.slice(0, 3).map((d: string, i: number) => (
                   <p

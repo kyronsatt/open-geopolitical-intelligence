@@ -29,10 +29,11 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<any>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+  const isDragging = useRef(false);
+  const dragNode = useRef<any>(null);
+  const panStart = useRef<{ x: number; y: number } | null>(null);
+  const simRef = useRef<any>(null);
 
   useEffect(() => {
     const update = () => {
@@ -103,47 +104,79 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
     [edges],
   );
 
-  const handleZoomIn = () => {
-    setScale((s) => Math.min(s + 0.25, 3));
-  };
+  // Zoom handler
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    setTransform((prev) => {
+      const newK = Math.max(0.3, Math.min(3, prev.k * scaleFactor));
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return { ...prev, k: newK };
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      return {
+        k: newK,
+        x: mx - (mx - prev.x) * (newK / prev.k),
+        y: my - (my - prev.y) * (newK / prev.k),
+      };
+    });
+  }, []);
 
-  const handleZoomOut = () => {
-    setScale((s) => Math.max(s - 0.25, 0.5));
-  };
+  // Pan handlers
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (
+        (e.target as SVGElement).tagName === "svg" ||
+        (e.target as SVGElement).tagName === "rect"
+      ) {
+        panStart.current = {
+          x: e.clientX - transform.x,
+          y: e.clientY - transform.y,
+        };
+      }
+    },
+    [transform],
+  );
 
-  const handleReset = () => {
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
-  };
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (dragNode.current && simRef.current) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const x = (e.clientX - rect.left - transform.x) / transform.k;
+        const y = (e.clientY - rect.top - transform.y) / transform.k;
+        dragNode.current.fx = x;
+        dragNode.current.fy = y;
+        simRef.current.alpha(0.3).restart();
+        return;
+      }
+      if (panStart.current) {
+        setTransform((prev) => ({
+          ...prev,
+          x: e.clientX - panStart.current!.x,
+          y: e.clientY - panStart.current!.y,
+        }));
+      }
+    },
+    [transform],
+  );
 
-  const handleWheel = (e: React.WheelEvent) => {
+  const handleMouseUp = useCallback(() => {
+    panStart.current = null;
+    if (dragNode.current) {
+      dragNode.current.fx = null;
+      dragNode.current.fy = null;
+      dragNode.current = null;
+    }
+  }, []);
+
+  const startDragNode = useCallback((e: React.MouseEvent, node: any) => {
     e.stopPropagation();
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setScale((s) => Math.max(0.5, Math.min(3, s + delta)));
+    dragNode.current = node;
+    if (simRef.current) {
+      simRef.current.alphaTarget(0.3).restart();
     }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0) {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  }, []);
 
   if (!snapshot?.causal_graph) {
     return (
@@ -167,82 +200,50 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="border-b border-border pb-2">
-        <h2 className="font-display text-2xl font-bold text-foreground">
+      <div>
+        <h2 className="font-mono-label text-og-secondary">
           CAUSAL RIPPLE ANALYSIS
         </h2>
         <p className="text-sm text-muted-foreground">
-          How actions propagate through the system
+          How actions propagate through the system · Scroll to zoom · Drag to
+          pan
         </p>
       </div>
 
       <div className="flex gap-4" ref={containerRef}>
         <GlassCard className="flex-1 p-0 overflow-hidden relative">
-          {/* Zoom controls */}
-          <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
-            <button
-              onClick={handleZoomIn}
-              className="p-2 rounded-md bg-surface/80 hover:bg-surface text-og-secondary hover:text-foreground transition-colors"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleZoomOut}
-              className="p-2 rounded-md bg-surface/80 hover:bg-surface text-og-secondary hover:text-foreground transition-colors"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleReset}
-              className="p-2 rounded-md bg-surface/80 hover:bg-surface text-og-secondary hover:text-foreground transition-colors"
-              title="Reset View"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Scale indicator */}
-          <div className="absolute bottom-3 right-3 z-10">
-            <span className="font-mono-label text-xs text-og-secondary bg-surface/80 px-2 py-1 rounded">
-              {Math.round(scale * 100)}%
-            </span>
-          </div>
-
-          <div
-            ref={containerRef}
-            className="overflow-hidden cursor-grab active:cursor-grabbing"
+          <svg
+            ref={svgRef}
+            width={dimensions.width}
+            height={dimensions.height}
+            style={{ cursor: panStart.current ? "grabbing" : "grab" }}
             onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            style={{ touchAction: "none" }}
           >
-            <svg
-              ref={svgRef}
+            <rect
               width={dimensions.width}
               height={dimensions.height}
-              style={{
-                transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-                transformOrigin: "center center",
-                transition: isDragging ? "none" : "transform 0.1s ease-out",
-              }}
+              fill="transparent"
+            />
+            <defs>
+              <marker
+                id="arrow"
+                viewBox="0 0 10 6"
+                refX="10"
+                refY="3"
+                markerWidth="8"
+                markerHeight="6"
+                orient="auto"
+              >
+                <path d="M0,0 L10,3 L0,6" fill="rgba(255,255,255,0.3)" />
+              </marker>
+            </defs>
+            <g
+              transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}
             >
-              <defs>
-                <marker
-                  id="arrow"
-                  viewBox="0 0 10 6"
-                  refX="10"
-                  refY="3"
-                  markerWidth="8"
-                  markerHeight="6"
-                  orient="auto"
-                >
-                  <path d="M0,0 L10,3 L0,6" fill="rgba(255,255,255,0.3)" />
-                </marker>
-              </defs>
               {edges.map((e: any, i: number) => {
                 const sx = typeof e.source === "object" ? e.source.x : 0;
                 const sy = typeof e.source === "object" ? e.source.y : 0;
@@ -293,13 +294,23 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
                   <g
                     key={n.id}
                     transform={`translate(${n.x},${n.y})`}
-                    style={{ cursor: "pointer", transition: "opacity 0.2s" }}
+                    style={{ cursor: "grab", transition: "opacity 0.2s" }}
                     opacity={visible ? 1 : 0.1}
                     onMouseEnter={() => setHovered(n.id)}
                     onMouseLeave={() => setHovered(null)}
                     onClick={() => setSelected(n)}
+                    onMouseDown={(e) => startDragNode(e, n)}
                   >
                     <circle r={r} fill={color} />
+                    {hovered === n.id && (
+                      <circle
+                        r={r + 4}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth={1}
+                        opacity={0.4}
+                      />
+                    )}
                     <text
                       y={r + 14}
                       textAnchor="middle"
@@ -309,11 +320,19 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
                     >
                       {n.label?.slice(0, 20)}
                     </text>
+                    {/* Tooltip on hover */}
+                    {hovered === n.id && n.description && (
+                      <foreignObject x={r + 8} y={-20} width={200} height={60}>
+                        <div className="bg-surface border border-border rounded px-2 py-1 text-[10px] text-muted-foreground shadow-lg">
+                          {n.description?.slice(0, 100)}
+                        </div>
+                      </foreignObject>
+                    )}
                   </g>
                 );
               })}
-            </svg>
-          </div>
+            </g>
+          </svg>
         </GlassCard>
 
         {/* Detail panel */}
