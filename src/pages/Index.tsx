@@ -8,10 +8,10 @@ import { seedIfEmpty } from "@/lib/seed";
 const Index = () => {
   const [conflictId, setConflictId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const globeRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const GlobeRef = useRef<any>(null);
   const [GlobeComponent, setGlobeComponent] = useState<any>(null);
+  const [geoJson, setGeoJson] = useState<any>(null);
 
   useEffect(() => {
     seedIfEmpty().then(id => {
@@ -24,6 +24,18 @@ const Index = () => {
     import("react-globe.gl").then(mod => {
       setGlobeComponent(() => mod.default);
     });
+  }, []);
+
+  // Load GeoJSON for country polygons
+  useEffect(() => {
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+      .then(r => r.json())
+      .then(topology => {
+        import("topojson-client").then(topojsonClient => {
+          const countries = topojsonClient.feature(topology, topology.objects.countries);
+          setGeoJson(countries);
+        });
+      });
   }, []);
 
   const goToConflict = useCallback(() => {
@@ -71,17 +83,24 @@ const Index = () => {
             backgroundColor="rgba(0,0,0,0)"
             showGlobe={true}
             showAtmosphere={true}
-            atmosphereColor="rgba(232,197,71,0.08)"
-            atmosphereAltitude={0.15}
-            globeMaterial={undefined}
+            atmosphereColor="rgb(232,197,71)"
+            atmosphereAltitude={0.12}
             width={typeof window !== 'undefined' ? Math.min(window.innerWidth, 800) : 800}
             height={typeof window !== 'undefined' ? Math.min(window.innerHeight, 800) : 800}
+            // Country polygons
+            polygonsData={geoJson?.features || []}
+            polygonCapColor={() => "rgba(14,14,26,0.95)"}
+            polygonSideColor={() => "rgba(232,197,71,0.05)"}
+            polygonStrokeColor={() => "rgba(232,197,71,0.15)"}
+            polygonAltitude={0.005}
+            // Arcs
             arcsData={arcsData}
             arcColor="color"
             arcDashLength={0.4}
             arcDashGap={0.2}
             arcDashAnimateTime={2000}
             arcStroke={1.5}
+            // Points
             pointsData={pointsData}
             pointAltitude={0.01}
             pointRadius="size"

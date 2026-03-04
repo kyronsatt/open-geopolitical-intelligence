@@ -116,7 +116,7 @@ export type Database = {
           description: string
           id: string
           significance: string
-          sources: string[] | null
+          sources: Json | null
           title: string
         }
         Insert: {
@@ -127,7 +127,7 @@ export type Database = {
           description: string
           id?: string
           significance: string
-          sources?: string[] | null
+          sources?: Json | null
           title: string
         }
         Update: {
@@ -138,7 +138,7 @@ export type Database = {
           description?: string
           id?: string
           significance?: string
-          sources?: string[] | null
+          sources?: Json | null
           title?: string
         }
         Relationships: [
