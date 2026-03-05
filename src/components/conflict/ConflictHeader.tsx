@@ -168,8 +168,8 @@ const ConflictHeader: React.FC<ConflictHeaderProps> = ({
         </motion.div>
       </div>
 
-      {/* Actors */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Actors — dynamic grid */}
+      <div className={`grid grid-cols-1 gap-4 ${conflict.actors?.length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         {conflict.actors?.map((actor, i) => (
           <GlassCard key={i}>
             <div className="flex items-center gap-2 mb-3">

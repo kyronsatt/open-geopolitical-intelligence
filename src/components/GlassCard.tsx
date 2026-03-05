@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { forwardRef, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps {
@@ -6,12 +6,23 @@ interface GlassCardProps {
   className?: string;
   onClick?: () => void;
   style?: React.CSSProperties;
+  onWheel?: (e: React.WheelEvent) => void;
 }
 
-const GlassCard = ({ children, className, onClick, style }: GlassCardProps) => (
-  <div className={cn("glass-card p-5", className)} onClick={onClick} style={style}>
-    {children}
-  </div>
+const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
+  ({ children, className, onClick, style, onWheel }, ref) => (
+    <div
+      ref={ref}
+      className={cn("glass-card p-5", className)}
+      onClick={onClick}
+      style={style}
+      onWheel={onWheel}
+    >
+      {children}
+    </div>
+  )
 );
+
+GlassCard.displayName = "GlassCard";
 
 export default GlassCard;

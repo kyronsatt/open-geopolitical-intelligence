@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Conflict, TimelineEvent, ConflictSeedData, TimelineEventSeedData, ConflictActor } from "@/lib/schemas";
+import type { ConflictSeedData, TimelineEventSeedData } from "@/lib/schemas";
 
 const CONFLICT_DATA: ConflictSeedData = {
   name: 'United States — Iran',
@@ -15,7 +15,10 @@ const CONFLICT_DATA: ConflictSeedData = {
       red_lines: ['Iranian nuclear weapon','Strait of Hormuz closure','Attack on US forces'] },
     { name: 'Islamic Republic of Iran', role: 'primary', country_code: 'IR', flag: '🇮🇷',
       interests: ['Regime survival','Sanctions relief','Regional hegemony','Nuclear deterrence'],
-      red_lines: ['Regime change','Military invasion','Nuclear program elimination'] }
+      red_lines: ['Regime change','Military invasion','Nuclear program elimination'] },
+    { name: 'Israel', role: 'primary', country_code: 'IL', flag: '🇮🇱',
+      interests: ['National security','Iranian nuclear prevention','Regional deterrence','Normalization with Arab states'],
+      red_lines: ['Iranian nuclear weapon','Proxy attacks on territory','Loss of qualitative military edge'] }
   ]
 };
 
@@ -38,7 +41,7 @@ export async function seedIfEmpty(): Promise<string | null> {
 
   const { data: conflict, error } = await supabase
     .from('conflicts')
-    .insert(CONFLICT_DATA)
+    .insert(CONFLICT_DATA as any)
     .select('id')
     .single();
 
@@ -49,7 +52,7 @@ export async function seedIfEmpty(): Promise<string | null> {
 
   const conflictId = conflict.id;
   const eventsWithId = EVENTS.map(e => ({ ...e, conflict_id: conflictId }));
-  const { error: evError } = await supabase.from('timeline_events').insert(eventsWithId);
+  const { error: evError } = await supabase.from('timeline_events').insert(eventsWithId as any);
   if (evError) console.error('Seed events error:', evError);
 
   return conflictId;
