@@ -262,8 +262,10 @@ export interface ImpactAssessment {
 }
 
 /** Required actions for a pathway */
+/** Dynamic pathway actions - supports any number of actors */
 export interface PathwayActions {
-  [actor: string]: string[];
+  international_community?: string[];
+  [actor: string]: string[] | undefined;
 }
 
 /** A policy pathway simulation */

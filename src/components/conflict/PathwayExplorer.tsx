@@ -123,7 +123,7 @@ const PathwayExplorer: React.FC<PathwayExplorerProps> = ({ snapshot }) => {
           >
             <GlassCard className="space-y-4">
               {/* Required Actions Accordion */}
-              {selected.required_actions && (
+              {selected.required_actions && typeof selected.required_actions === 'object' && (
                 <div>
                   <button
                     className="flex items-center gap-2 w-full"
@@ -140,7 +140,7 @@ const PathwayExplorer: React.FC<PathwayExplorerProps> = ({ snapshot }) => {
                   </button>
                   {openSections.actions && (
                     <div className="mt-2 space-y-3 pl-6">
-                      {Object.entries(selected.required_actions).map(
+                      {Object.entries(selected.required_actions as Record<string, string[]>).map(
                         ([actor, actions]) => (
                           <div key={actor}>
                             <p className="font-mono-label text-accent-color text-[10px] mb-1">
@@ -165,7 +165,7 @@ const PathwayExplorer: React.FC<PathwayExplorerProps> = ({ snapshot }) => {
               )}
 
               {/* Preconditions */}
-              {selected.preconditions?.length > 0 && (
+              {Array.isArray(selected.preconditions) && selected.preconditions.length > 0 && (
                 <div>
                   <button
                     className="flex items-center gap-2 w-full"
@@ -182,27 +182,31 @@ const PathwayExplorer: React.FC<PathwayExplorerProps> = ({ snapshot }) => {
                   </button>
                   {openSections.preconditions && (
                     <div className="mt-2 pl-6">
-                      {selected?.preconditions?.map((p: string, i: number) => (
-                        <p
-                          key={i}
-                          className="text-sm text-og-muted flex items-center gap-2"
-                        >
-                          <span className="w-3 h-3 rounded border border-og-muted" />
-                          {p}
-                        </p>
-                      ))}
+                      {Array.isArray(selected?.preconditions) ? (
+                        selected.preconditions.map((p: string, i: number) => (
+                          <p
+                            key={i}
+                            className="text-sm text-og-muted flex items-center gap-2"
+                          >
+                            <span className="w-3 h-3 rounded border border-og-muted" />
+                            {p}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm text-og-muted">No preconditions available</p>
+                      )}
                     </div>
                   )}
                 </div>
               )}
 
               {/* Obstacles */}
-              {selected.obstacles?.length > 0 && (
+              {Array.isArray(selected.obstacles) && selected.obstacles.length > 0 && (
                 <div>
                   <span className="font-mono-label text-og-secondary block mb-1">
                     OBSTACLES
                   </span>
-                  {selected?.obstacles?.map((o: string, i: number) => (
+                  {selected.obstacles.map((o: string, i: number) => (
                     <p
                       key={i}
                       className="text-sm text-muted-foreground flex items-center gap-2"
@@ -215,12 +219,12 @@ const PathwayExplorer: React.FC<PathwayExplorerProps> = ({ snapshot }) => {
               )}
 
               {/* Side Effects */}
-              {selected.systemic_side_effects?.length > 0 && (
+              {Array.isArray(selected.systemic_side_effects) && selected.systemic_side_effects.length > 0 && (
                 <div>
                   <span className="font-mono-label text-og-secondary block mb-1">
                     SYSTEMIC SIDE EFFECTS
                   </span>
-                  {selected?.systemic_side_effects?.map(
+                  {selected.systemic_side_effects.map(
                     (s: string, i: number) => (
                       <p
                         key={i}
