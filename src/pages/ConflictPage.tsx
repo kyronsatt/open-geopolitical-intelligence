@@ -10,14 +10,15 @@ import CausalGraphView from "@/components/conflict/CausalGraphView";
 import PathwayExplorer from "@/components/conflict/PathwayExplorer";
 import StickyDotNav from "@/components/conflict/StickyDotNav";
 import { X } from "lucide-react";
+import type { Conflict, TimelineEvent, AnalysisSnapshot } from "@/lib/schemas";
 
 const ConflictPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [conflict, setConflict] = useState<any>(null);
-  const [events, setEvents] = useState<any[]>([]);
-  const [snapshot, setSnapshot] = useState<any>(null);
-  const [snapshotHistory, setSnapshotHistory] = useState<any[]>([]);
+  const [conflict, setConflict] = useState<Conflict | null>(null);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [snapshot, setSnapshot] = useState<AnalysisSnapshot | null>(null);
+  const [snapshotHistory, setSnapshotHistory] = useState<Pick<AnalysisSnapshot, 'id' | 'created_at' | 'triggered_by_event_id'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [bannerVisible, setBannerVisible] = useState(true);
 
@@ -42,10 +43,10 @@ const ConflictPage = () => {
         .eq("conflict_id", id)
         .order("created_at", { ascending: false }),
     ]).then(([c, e, s, sh]) => {
-      setConflict(c.data);
-      setEvents((e.data || []) as any[]);
-      setSnapshot(s.data);
-      setSnapshotHistory((sh.data || []) as any[]);
+      setConflict(c.data as Conflict | null);
+      setEvents((e.data || []) as TimelineEvent[]);
+      setSnapshot(s.data as AnalysisSnapshot | null);
+      setSnapshotHistory((sh.data || []) as Pick<AnalysisSnapshot, 'id' | 'created_at' | 'triggered_by_event_id'>[]);
       setLoading(false);
     });
   }, [id]);

@@ -9,13 +9,12 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-
-interface ConflictHeaderProps {
-  conflict: any;
-  snapshot: any;
-  snapshotHistory: any[];
-  events: any[];
-}
+import type { 
+  Conflict, 
+  AnalysisSnapshot, 
+  TimelineEvent,
+  ConflictHeaderProps 
+} from "@/lib/schemas";
 
 // Helper to get badge styling based on status
 const getStatusBadge = (status: string) => {
@@ -86,21 +85,21 @@ const getIntensityInfo = (intensity: number) => {
   return { level, pct, color, bg };
 };
 
-const ConflictHeader = ({
+const ConflictHeader: React.FC<ConflictHeaderProps> = ({
   conflict,
   snapshot,
   snapshotHistory,
   events,
-}: ConflictHeaderProps) => {
+}) => {
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const triggeringEvent = snapshot?.triggered_by_event_id
-    ? events.find((e: any) => e.id === snapshot.triggered_by_event_id)
+    ? events.find((e) => e.id === snapshot.triggered_by_event_id)
     : null;
 
   // Dynamic badges based on conflict data
   const statusBadge = getStatusBadge(conflict.status);
-  const typeBadge = getTypeBadge(conflict.type);
+  const typeBadge = getTypeBadge(conflict.category);
   const intensityInfo = getIntensityInfo(conflict.intensity);
 
   return (
@@ -171,7 +170,7 @@ const ConflictHeader = ({
 
       {/* Actors */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(conflict.actors as any[])?.map((actor: any, i: number) => (
+        {conflict.actors?.map((actor, i) => (
           <GlassCard key={i}>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-2xl">{actor.flag}</span>
@@ -184,7 +183,7 @@ const ConflictHeader = ({
                 INTERESTS
               </span>
               <ul className="space-y-1">
-                {actor.interests?.map((int: string, j: number) => (
+                {actor.interests?.map((int, j) => (
                   <li
                     key={j}
                     className="flex items-center gap-2 text-sm text-muted-foreground"
@@ -200,7 +199,7 @@ const ConflictHeader = ({
                 RED LINES
               </span>
               <ul className="space-y-1">
-                {actor.red_lines?.map((rl: string, j: number) => (
+                {actor.red_lines?.map((rl, j) => (
                   <li
                     key={j}
                     className="flex items-center gap-2 text-sm text-red-vivid"
@@ -240,7 +239,7 @@ const ConflictHeader = ({
           <span className="font-mono-label text-og-secondary block mb-2">
             SNAPSHOT HISTORY
           </span>
-          {snapshotHistory.map((s: any) => (
+          {snapshotHistory.map((s) => (
             <div
               key={s.id}
               className="flex items-center justify-between py-1 border-b border-border last:border-0"
@@ -249,7 +248,7 @@ const ConflictHeader = ({
                 {s.id.slice(0, 8)}
               </span>
               <span className="text-xs text-muted-foreground">
-                {new Date(s.created_at).toLocaleDateString()}
+                {new Date(s.created_at || '').toLocaleDateString()}
               </span>
             </div>
           ))}

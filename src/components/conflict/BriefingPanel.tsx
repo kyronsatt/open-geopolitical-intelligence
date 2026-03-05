@@ -1,11 +1,8 @@
 import GlassCard from "@/components/GlassCard";
 import { motion } from "framer-motion";
+import type { BriefingPanelProps, Briefing, DiplomaticChannel } from "@/lib/schemas";
 
-interface BriefingPanelProps {
-  snapshot: any;
-}
-
-const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
+const BriefingPanel: React.FC<BriefingPanelProps> = ({ snapshot }) => {
   if (!snapshot?.briefing) {
     return (
       <div className="space-y-4">
@@ -54,7 +51,7 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
       {/* Executive Summary */}
       <GlassCard
         className="relative"
-        style={{ borderLeft: "2px solid hsl(var(--accent))" } as any}
+        style={{ borderLeft: '2px solid hsl(var(--accent))' }}
       >
         <p className="text-base font-body leading-relaxed text-foreground pr-24">
           {b.summary}
@@ -125,7 +122,7 @@ const BriefingPanel = ({ snapshot }: BriefingPanelProps) => {
           <p className="font-mono-label text-[10px] text-accent-color mb-2">
             TONE: {b.diplomatic_status?.current_tone?.toUpperCase()}
           </p>
-          {b.diplomatic_status?.active_channels?.map((ch: any, i: number) => {
+          {b.diplomatic_status?.active_channels?.map((ch: DiplomaticChannel, i: number) => {
             const dotColor =
               ch.status === "active"
                 ? "bg-og-green"

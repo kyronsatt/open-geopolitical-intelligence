@@ -2,39 +2,26 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import GlassCard from "@/components/GlassCard";
 import * as d3Force from "d3-force";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import type { CausalGraphViewProps, CausalNode, CausalEdge, CausalNodeCategory } from "@/lib/schemas";
+import { CAUSAL_NODE_COLORS, CAUSAL_NODE_RADIUS } from "@/lib/schemas";
 
-interface CausalGraphViewProps {
-  snapshot: any;
-}
+const NODE_COLORS = CAUSAL_NODE_COLORS;
+const NODE_RADIUS = CAUSAL_NODE_RADIUS;
 
-const NODE_COLORS: Record<string, string> = {
-  actor: "#e8c547",
-  event: "#ff4444",
-  effect: "#4488ff",
-  variable: "#888899",
-};
-
-const NODE_RADIUS: Record<string, number> = {
-  actor: 18,
-  event: 12,
-  effect: 10,
-  variable: 8,
-};
-
-const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
+const CausalGraphView: React.FC<CausalGraphViewProps> = ({ snapshot }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes] = useState<any[]>([]);
-  const [edges, setEdges] = useState<any[]>([]);
+  const [nodes, setNodes] = useState<CausalNode[]>([]);
+  const [edges, setEdges] = useState<CausalEdge[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
-  const [selected, setSelected] = useState<any>(null);
+  const [selected, setSelected] = useState<CausalNode | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [isReady, setIsReady] = useState(false);
   const isDragging = useRef(false);
-  const dragNode = useRef<any>(null);
+  const dragNode = useRef<CausalNode | null>(null);
   const panStart = useRef<{ x: number; y: number } | null>(null);
-  const simRef = useRef<any>(null);
+  const simRef = useRef<d3Force.Simulation<CausalNode, undefined> | null>(null);
 
   useEffect(() => {
     const update = () => {
@@ -53,12 +40,12 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
     setIsReady(false);
 
     const g = snapshot.causal_graph;
-    const simNodes = (g.nodes || []).map((n: any, i: number) => ({
+    const simNodes = (g.nodes || []).map((n: CausalNode, i: number) => ({
       ...n,
       x: dimensions.width / 2 + (Math.random() - 0.5) * 200,
       y: dimensions.height / 2 + (Math.random() - 0.5) * 200,
     }));
-    const simEdges = (g.edges || []).map((e: any) => ({
+    const simEdges = (g.edges || []).map((e: CausalEdge) => ({
       ...e,
       source: e.source,
       target: e.target,
@@ -69,8 +56,8 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
       .force(
         "link",
         d3Force
-          .forceLink(simEdges)
-          .id((d: any) => d.id)
+          .forceLink<CausalNode, CausalEdge>(simEdges)
+          .id((d) => d.id)
           .distance(100),
       )
       .force("charge", d3Force.forceManyBody().strength(-300))
@@ -104,7 +91,7 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
   const connectedIds = useCallback(
     (nodeId: string) => {
       const ids = new Set<string>([nodeId]);
-      edges.forEach((e: any) => {
+      edges.forEach((e: CausalEdge) => {
         const sId = typeof e.source === "object" ? e.source?.id : e.source;
         const tId = typeof e.target === "object" ? e.target?.id : e.target;
         if (sId === nodeId) ids.add(tId);
@@ -207,7 +194,7 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
     }
   }, []);
 
-  const startDragNode = useCallback((e: React.MouseEvent, node: any) => {
+  const startDragNode = useCallback((e: React.MouseEvent, node: CausalNode) => {
     e.stopPropagation();
     dragNode.current = node;
     if (simRef.current) {
@@ -236,7 +223,7 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
   const highlightSet = hovered ? connectedIds(hovered) : null;
 
   // Safe edge rendering with null checks
-  const renderEdge = (e: any, i: number) => {
+  const renderEdge = (e: CausalEdge, i: number) => {
     const sx = typeof e.source === "object" ? (e.source?.x ?? 0) : 0;
     const sy = typeof e.source === "object" ? (e.source?.y ?? 0) : 0;
     const tx = typeof e.target === "object" ? (e.target?.x ?? 0) : 0;
@@ -356,11 +343,11 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
               transform={`translate(${transform?.x ?? 0},${transform?.y ?? 0}) scale(${transform?.k ?? 1})`}
             >
               {/* Edges */}
-              {isReady && edges.map((e: any, i: number) => renderEdge(e, i))}
+              {isReady && edges.map((e: CausalEdge, i: number) => renderEdge(e, i))}
 
               {/* Nodes */}
               {isReady &&
-                nodes.map((n: any) => {
+                nodes.map((n: CausalNode) => {
                   const r = NODE_RADIUS[n.category] || 8;
                   const color = NODE_COLORS[n.category] || "#888";
                   const visible = !highlightSet || highlightSet.has(n.id);
@@ -429,20 +416,20 @@ const CausalGraphView = ({ snapshot }: CausalGraphViewProps) => {
               CONNECTIONS
             </span>
             {edges
-              .filter((e: any) => {
+              .filter((e: CausalEdge) => {
                 const sId =
                   typeof e.source === "object" ? e.source?.id : e.source;
                 const tId =
                   typeof e.target === "object" ? e.target?.id : e.target;
                 return sId === selected.id || tId === selected.id;
               })
-              .map((e: any, i: number) => {
+              .map((e: CausalEdge, i: number) => {
                 const sId =
                   typeof e.source === "object" ? e.source?.id : e.source;
                 const tId =
                   typeof e.target === "object" ? e.target?.id : e.target;
                 const other = sId === selected.id ? tId : sId;
-                const otherNode = nodes.find((n: any) => n.id === other);
+                const otherNode = nodes.find((n: CausalNode) => n.id === other);
                 return (
                   <p key={i} className="text-xs text-muted-foreground">
                     {sId === selected.id ? "→" : "←"}{" "}

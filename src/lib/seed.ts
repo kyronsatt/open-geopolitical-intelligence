@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Conflict, TimelineEvent, ConflictSeedData, TimelineEventSeedData, ConflictActor } from "@/lib/schemas";
 
-const CONFLICT_DATA = {
+const CONFLICT_DATA: ConflictSeedData = {
   name: 'United States — Iran',
   category: 'hybrid',
   status: 'escalating',
@@ -18,7 +19,7 @@ const CONFLICT_DATA = {
   ]
 };
 
-const EVENTS = [
+const EVENTS: TimelineEventSeedData[] = [
   { date: '1979-11-04', title: 'Iran Hostage Crisis Begins', description: 'Iranian students storm US embassy in Tehran, taking 52 Americans hostage for 444 days. Marks the rupture of US-Iran diplomatic relations.', category: 'diplomatic', significance: 'critical', sources: [{ name: 'State Department Archives', url: 'https://history.state.gov/departmenthistory/short-history/iraniancrises' }] },
   { date: '2015-07-14', title: 'JCPOA Nuclear Agreement Signed', description: 'Iran and P5+1 reach landmark nuclear deal. Iran limits enrichment in exchange for sanctions relief.', category: 'diplomatic', significance: 'critical', sources: [{ name: 'UN Security Council' }, { name: 'IAEA', url: 'https://www.iaea.org/newscenter/focus/iran' }] },
   { date: '2018-05-08', title: 'US Withdraws from JCPOA', description: 'Trump announces withdrawal from nuclear agreement and reimposition of maximum pressure sanctions.', category: 'economic', significance: 'critical', sources: [{ name: 'White House' }] },
@@ -37,7 +38,7 @@ export async function seedIfEmpty(): Promise<string | null> {
 
   const { data: conflict, error } = await supabase
     .from('conflicts')
-    .insert(CONFLICT_DATA as any)
+    .insert(CONFLICT_DATA)
     .select('id')
     .single();
 
@@ -46,9 +47,9 @@ export async function seedIfEmpty(): Promise<string | null> {
     return null;
   }
 
-  const conflictId = (conflict as any).id as string;
+  const conflictId = conflict.id;
   const eventsWithId = EVENTS.map(e => ({ ...e, conflict_id: conflictId }));
-  const { error: evError } = await supabase.from('timeline_events').insert(eventsWithId as any);
+  const { error: evError } = await supabase.from('timeline_events').insert(eventsWithId);
   if (evError) console.error('Seed events error:', evError);
 
   return conflictId;

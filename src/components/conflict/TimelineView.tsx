@@ -2,26 +2,14 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import GlassCard from "@/components/GlassCard";
 import { ExternalLink } from "lucide-react";
+import type { TimelineViewProps, TimelineEvent, Source, EventCategory, EventSignificance } from "@/lib/schemas";
+import { EVENT_SIZE_MAP, EVENT_COLOR_MAP } from "@/lib/schemas";
 
-interface TimelineViewProps {
-  events: any[];
-}
-
-const sizeMap: Record<string, number> = {
-  critical: 16,
-  high: 12,
-  medium: 8,
-  low: 6,
+const getColor = (cat: EventCategory): string => {
+  return EVENT_COLOR_MAP[cat] || "hsl(270,100%,63%)";
 };
 
-const getColor = (cat: string) => {
-  if (cat === "military") return "hsl(var(--red-vivid))";
-  if (cat === "diplomatic") return "hsl(var(--blue-vivid))";
-  if (cat === "economic") return "hsl(var(--accent))";
-  return "hsl(270,100%,63%)";
-};
-
-const SourceBadge = ({ source }: { source: any }) => {
+const SourceBadge = ({ source }: { source: Source }) => {
   const name = typeof source === "string" ? source : source?.name || "Unknown";
   const url = typeof source === "object" ? source?.url : undefined;
 
@@ -46,7 +34,7 @@ const SourceBadge = ({ source }: { source: any }) => {
   );
 };
 
-const TimelineView = ({ events }: TimelineViewProps) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ events }) => {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
@@ -67,9 +55,9 @@ const TimelineView = ({ events }: TimelineViewProps) => {
             className="absolute top-[32px] left-0 right-0 h-[2px]"
             style={{ background: "hsl(var(--border-default))" }}
           />
-          {events.map((ev: any, i: number) => {
-            const size = sizeMap[ev.significance] || 8;
-            const color = getColor(ev.category);
+          {events.map((ev: TimelineEvent, i: number) => {
+            const size = EVENT_SIZE_MAP[ev.significance as EventSignificance] || 8;
+            const color = getColor(ev.category as EventCategory);
             const isCritical = ev.significance === "critical";
             return (
               <motion.div
@@ -105,9 +93,9 @@ const TimelineView = ({ events }: TimelineViewProps) => {
 
       {/* Mobile vertical */}
       <div className="md:hidden space-y-4">
-        {events.map((ev: any, i: number) => {
-          const color = getColor(ev.category);
-          const size = sizeMap[ev.significance] || 8;
+        {events.map((ev: TimelineEvent, i: number) => {
+          const color = getColor(ev.category as EventCategory);
+          const size = EVENT_SIZE_MAP[ev.significance as EventSignificance] || 8;
           return (
             <motion.div
               key={ev.id}
@@ -145,7 +133,7 @@ const TimelineView = ({ events }: TimelineViewProps) => {
       {/* Expanded card */}
       {expanded &&
         (() => {
-          const ev = events.find((e: any) => e.id === expanded);
+          const ev = events.find((e) => e.id === expanded);
           if (!ev) return null;
           const sources = ev.sources || [];
           return (
@@ -175,7 +163,7 @@ const TimelineView = ({ events }: TimelineViewProps) => {
                 </p>
                 {sources.length > 0 && (
                   <div className="flex gap-2 flex-wrap">
-                    {sources.map((s: any, i: number) => (
+                    {sources.map((s: Source, i: number) => (
                       <SourceBadge key={i} source={s} />
                     ))}
                   </div>

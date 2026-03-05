@@ -4,15 +4,35 @@ import { motion } from "framer-motion";
 import NavBar from "@/components/NavBar";
 import GlassCard from "@/components/GlassCard";
 import { seedIfEmpty } from "@/lib/seed";
+import type { GlobeComponent as GlobeType } from "react-globe.gl";
+
+// Type for capital city data
+interface CapitalCity {
+  label: string;
+  lat: number;
+  lng: number;
+}
+
+// Type for GeoJSON features
+interface GeoJSONFeature {
+  type: string;
+  properties: {
+    name: string;
+  };
+  geometry: {
+    type: string;
+    coordinates: number[][] | number[][][];
+  };
+}
 
 const Index = () => {
   const [conflictId, setConflictId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const GlobeRef = useRef<any>(null);
-  const [GlobeComponent, setGlobeComponent] = useState<any>(null);
-  const [geoJson, setGeoJson] = useState<any>(null);
-  const [capitals, setCapitals] = useState<any[]>([]);
+  const GlobeRef = useRef<GlobeType>(null);
+  const [GlobeComponent, setGlobeComponent] = useState<GlobeType | null>(null);
+  const [geoJson, setGeoJson] = useState<{ features: GeoJSONFeature[] } | null>(null);
+  const [capitals, setCapitals] = useState<CapitalCity[]>([]);
   useEffect(() => {
     seedIfEmpty().then((id) => {
       setConflictId(id);
@@ -131,7 +151,7 @@ const Index = () => {
             polygonSideColor={() => "rgba(232,197,71,0.3)"}
             polygonStrokeColor={() => "rgba(232,197,71,0.1)"}
             polygonAltitude={0.001}
-            polygonLabel={(d: any) => `
+            polygonLabel={(d: GeoJSONFeature) => `
               <div style="
                 background: rgba(14,14,26,0.95);
                 padding: 6px 10px;

@@ -1,10 +1,7 @@
 import GlassCard from "@/components/GlassCard";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
-
-interface ImpactMetricsProps {
-  snapshot: any;
-}
+import type { ImpactMetricsProps, ImpactMetric, TrendDirection } from "@/lib/schemas";
 
 const METRICS = [
   {
@@ -35,7 +32,7 @@ const METRICS = [
   { key: "alliance_stress", label: "ALLIANCE STRESS", reversed: false },
 ];
 
-const ImpactMetrics = ({ snapshot }: ImpactMetricsProps) => {
+const ImpactMetrics: React.FC<ImpactMetricsProps> = ({ snapshot }) => {
   if (!snapshot?.impact) return null;
 
   const impact = snapshot.impact;

@@ -7,19 +7,14 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import type {
+  PathwayExplorerProps,
+  PolicyPathway,
+  RiskLevel,
+} from "@/lib/schemas";
+import { RISK_COLORS } from "@/lib/schemas";
 
-interface PathwayExplorerProps {
-  snapshot: any;
-}
-
-const riskColor: Record<string, string> = {
-  low: "text-og-green bg-[rgba(68,255,136,0.12)]",
-  medium: "text-accent-color bg-accent-dim",
-  high: "text-[hsl(30,100%,60%)] bg-[rgba(255,140,0,0.12)]",
-  critical: "text-red-vivid bg-red-dim",
-};
-
-const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
+const PathwayExplorer: React.FC<PathwayExplorerProps> = ({ snapshot }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
@@ -41,8 +36,8 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
     );
   }
 
-  const pathways = snapshot.pathways;
-  const selected = pathways.find((p: any) => p.id === selectedId);
+  const pathways = snapshot.pathways || [];
+  const selected = pathways.find((p: PolicyPathway) => p.id === selectedId);
 
   const toggleSection = (key: string) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -60,7 +55,7 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {pathways.map((p: any) => {
+        {pathways.map((p: PolicyPathway) => {
           const isSelected = p.id === selectedId;
           return (
             <GlassCard
@@ -69,7 +64,7 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
               onClick={() => setSelectedId(isSelected ? null : p.id)}
             >
               <span
-                className={`font-mono-label text-[10px] px-2 py-0.5 rounded ${riskColor[p.risk_level] || riskColor.medium}`}
+                className={`font-mono-label text-[10px] px-2 py-0.5 rounded ${RISK_COLORS[p.risk_level as RiskLevel] || RISK_COLORS.medium}`}
               >
                 {p.risk_level?.toUpperCase()} RISK
               </span>
@@ -146,13 +141,13 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
                   {openSections.actions && (
                     <div className="mt-2 space-y-3 pl-6">
                       {Object.entries(selected.required_actions).map(
-                        ([actor, actions]: [string, any]) => (
+                        ([actor, actions]) => (
                           <div key={actor}>
                             <p className="font-mono-label text-accent-color text-[10px] mb-1">
                               {actor.toUpperCase()}
                             </p>
-                            {(actions as string[]).map(
-                              (a: string, i: number) => (
+                            {Array.isArray(actions) &&
+                              actions.map((a: string, i: number) => (
                                 <p
                                   key={i}
                                   className="text-sm text-muted-foreground flex items-center gap-2"
@@ -160,8 +155,7 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
                                   <CheckCircle className="w-3 h-3 text-og-muted" />
                                   {a}
                                 </p>
-                              ),
-                            )}
+                              ))}
                           </div>
                         ),
                       )}
@@ -188,7 +182,7 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
                   </button>
                   {openSections.preconditions && (
                     <div className="mt-2 pl-6">
-                      {selected.preconditions.map((p: string, i: number) => (
+                      {selected?.preconditions?.map((p: string, i: number) => (
                         <p
                           key={i}
                           className="text-sm text-og-muted flex items-center gap-2"
@@ -208,7 +202,7 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
                   <span className="font-mono-label text-og-secondary block mb-1">
                     OBSTACLES
                   </span>
-                  {selected.obstacles.map((o: string, i: number) => (
+                  {selected?.obstacles?.map((o: string, i: number) => (
                     <p
                       key={i}
                       className="text-sm text-muted-foreground flex items-center gap-2"
@@ -226,7 +220,7 @@ const PathwayExplorer = ({ snapshot }: PathwayExplorerProps) => {
                   <span className="font-mono-label text-og-secondary block mb-1">
                     SYSTEMIC SIDE EFFECTS
                   </span>
-                  {selected.systemic_side_effects.map(
+                  {selected?.systemic_side_effects?.map(
                     (s: string, i: number) => (
                       <p
                         key={i}
