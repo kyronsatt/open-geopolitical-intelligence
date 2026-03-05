@@ -2,7 +2,7 @@
 
 ## Open Geopolitical Intelligence
 
-### _Intelligence should be public._
+### _Geopolitical intelligence for a better world._
 
 ---
 
@@ -124,7 +124,7 @@ It is infrastructure — for a more rational, more informed civilization.
 
 ## The Design Philosophy
 
-**Intelligence should be public.**
+**Geopolitical intelligence for a better world.**
 The core belief. Analysis of the quality that shapes decisions about war and peace should not be the exclusive property of governments and institutions. It belongs to everyone.
 
 **Transparency over authority.**

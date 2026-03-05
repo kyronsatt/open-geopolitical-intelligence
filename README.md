@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/kyronsatt/open-geopolitical-intelligence?style=social)](https://github.com/kyronsatt/open-geopolitical-intelligence)
 
-**Intelligence should be public.**
+**Geopolitical intelligence for a better world.**
 
 [What is OGI?](#what-is-ogi) • [Current State](#current-state-poc) • [Quick Start](#quick-start) • [Roadmap](#roadmap) • [Contributing](#contributing)
 
@@ -15,13 +15,9 @@
 
 ## What is OGI?
 
-Governments classify it. Institutions gatekeep it. The public rarely gets it.
-
-**Geopolitical intelligence** — the kind that explains not just _what_ is happening, but _why_, _how_, and _what comes next_ — has historically belonged to a small class of analysts, advisors, and institutions. Everyone else gets the news: the surface, stripped of causality, stripped of structure, stripped of the reasoning that makes events actually intelligible.
-
-OGI is an open-source platform built on the belief that this should change.
-
-It combines structured conflict data with AI-powered analysis to produce the kind of layered, multi-perspective intelligence that has until now lived behind classification levels and paywalls — and makes it freely accessible to anyone.
+OGI is an open-source platform that produces structured geopolitical intelligence — and makes it public.
+For any conflict, it tells you: who the actors are and what they actually want, what leverage each side holds, how the current situation developed, what the systemic consequences of escalation look like, and what realistic pathways toward resolution exist. Each claim is sourced. Each probability shows its range. The methodology is fully open.
+This is the kind of analysis that exists inside governments and closed institutions. It has never been freely available. OGI is built to change that.
 
 > For the full vision, read the **[OGI Manifest](./MANIFEST.md)**.
 
@@ -224,7 +220,7 @@ MIT — see [LICENSE](./LICENSE).
 
 <div align="center">
 
-**OGI** — _Intelligence should be public._
+**OGI** — _Geopolitical intelligence for a better world._
 
 Built by [Kyronsatt](https://kyronsatt.com) · [Read the Manifest](./MANIFEST.md)
 
