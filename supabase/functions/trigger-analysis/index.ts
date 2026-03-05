@@ -42,19 +42,35 @@ interface ActorInfo {
 }
 
 function slugify(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 function buildBriefingSchema(actors: ActorInfo[]): string {
-  const milParts = actors.map(a => `${a.slug}:{current_posture:string,recent_actions:string[],stated_objectives:string[]}`).join(",");
-  const presParts = actors.map(a => `${a.slug}:{pressure_level:number(0-100),political_pressure:string,regime_stability:string}`).join(",");
+  const milParts = actors
+    .map(
+      (a) =>
+        `${a.slug}:{current_posture:string,recent_actions:string[],stated_objectives:string[]}`,
+    )
+    .join(",");
+  const presParts = actors
+    .map(
+      (a) =>
+        `${a.slug}:{pressure_level:number(0-100),political_pressure:string,regime_stability:string}`,
+    )
+    .join(",");
   return `{summary:string,military_posture:{${milParts}},economic_measures:{active_sanctions:string[],trade_impact:string,currency_effects:string},diplomatic_status:{active_channels:[{name:string,status:"active"|"cold"|"broken"}],current_tone:string,third_party_mediators:string[]},internal_pressure:{${presParts}},confidence_level:"low"|"medium"|"high",confidence_reasoning:string}`;
 }
 
 function buildImpactSchema(actors: ActorInfo[]): string {
-  const domesticParts = actors.map(a =>
-    `domestic_stability_${a.slug}:{score:number(0-100),trend:string,drivers:string[],confidence_low:number,confidence_high:number}`
-  ).join(",");
+  const domesticParts = actors
+    .map(
+      (a) =>
+        `domestic_stability_${a.slug}:{score:number(0-100),trend:string,drivers:string[],confidence_low:number,confidence_high:number}`,
+    )
+    .join(",");
   return `{${domesticParts},regional_destabilization:{score:number(0-100),trend:string,affected_countries:string[],mechanisms:string[],confidence_low:number,confidence_high:number},global_economic_shock:{score:number(0-100),trend:string,primary_channels:string[],confidence_low:number,confidence_high:number},energy_market_disruption:{score:number(0-100),trend:string,oil_price_impact:string,strait_of_hormuz_risk:number(0-100),confidence_low:number,confidence_high:number},alliance_stress:{score:number(0-100),trend:string,stressed_alliances:string[],confidence_low:number,confidence_high:number}}`;
 }
 
@@ -63,18 +79,18 @@ function buildGraphSchema(_actors: ActorInfo[]): string {
 }
 
 function buildPathwaysSchema(actors: ActorInfo[]): string {
-  const actorActions = actors.map(a => `${a.slug}:string[]`).join(",");
+  const actorActions = actors.map((a) => `${a.slug}:string[]`).join(",");
   return `[{id:string,name:string,description:string,required_actions:{${actorActions},international_community:string[]},preconditions:string[],risk_level:"low"|"medium"|"high"|"critical",probability_estimate:number(0-100),probability_confidence_low:number,probability_confidence_high:number,time_horizon:string,systemic_side_effects:string[],obstacles:string[]}] - exactly 3 items: diplomatic, economic pressure, military containment`;
 }
 
 function buildContext(actors: ActorInfo[], existingEvents: any[]): string {
-  const actorContext = actors.map(a => ({
+  const actorContext = actors.map((a) => ({
     name: a.name,
     code: a.country_code,
     interests: a.interests,
     red_lines: a.red_lines,
   }));
-  const recentEvents = existingEvents.slice(-10).map(e => ({
+  const recentEvents = existingEvents.slice(-10).map((e) => ({
     date: e.date,
     title: e.title,
     category: e.category,
@@ -99,37 +115,63 @@ async function callLLMWithRetry(
 
   for (let retry = 0; retry < MAX_RETRIES; retry++) {
     try {
-      console.log(`[trigger-analysis] [${schemaKey}] model=${currentModel} attempt=${attempt} retry=${retry}`);
+      console.log(
+        `[trigger-analysis] [${schemaKey}] model=${currentModel} attempt=${attempt} retry=${retry}`,
+      );
       const startTime = Date.now();
 
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://ogse.io",
-          "X-Title": "OGSE",
+      const response = await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://ogi.io",
+            "X-Title": "OGI",
+          },
+          body: JSON.stringify({
+            model: currentModel,
+            temperature: 0.2,
+            messages: [
+              { role: "system", content: SYSTEM },
+              {
+                role: "user",
+                content: `Context: ${context}\nEvent: ${event}\nRespond with JSON matching this schema: ${schema}`,
+              },
+            ],
+          }),
         },
-        body: JSON.stringify({
-          model: currentModel,
-          temperature: 0.2,
-          messages: [
-            { role: "system", content: SYSTEM },
-            { role: "user", content: `Context: ${context}\nEvent: ${event}\nRespond with JSON matching this schema: ${schema}` },
-          ],
-        }),
-      });
+      );
 
       const elapsed = Date.now() - startTime;
-      console.log(`[trigger-analysis] [${schemaKey}] status=${response.status} elapsed=${elapsed}ms`);
+      console.log(
+        `[trigger-analysis] [${schemaKey}] status=${response.status} elapsed=${elapsed}ms`,
+      );
 
       if (!response.ok) {
         const text = await response.text();
-        console.error(`[trigger-analysis] [${schemaKey}] ERROR: ${response.status} - ${text}`);
-        if ((response.status >= 500 || response.status === 429) && (attempt + 1) < models.length) {
-          return callLLMWithRetry(schemaKey, schema, context, event, models, attempt + 1);
+        console.error(
+          `[trigger-analysis] [${schemaKey}] ERROR: ${response.status} - ${text}`,
+        );
+        if (
+          (response.status >= 500 || response.status === 429) &&
+          attempt + 1 < models.length
+        ) {
+          return callLLMWithRetry(
+            schemaKey,
+            schema,
+            context,
+            event,
+            models,
+            attempt + 1,
+          );
         }
-        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        if (
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 429
+        ) {
           throw new Error(`LLM ${schemaKey}: ${response.status} - ${text}`);
         }
         await delay(RETRY_DELAY_MS * (retry + 1));
@@ -138,29 +180,54 @@ async function callLLMWithRetry(
 
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || "{}";
-      console.log(`[trigger-analysis] [${schemaKey}] content_len=${content.length} usage=${JSON.stringify(data.usage || {})}`);
+      console.log(
+        `[trigger-analysis] [${schemaKey}] content_len=${content.length} usage=${JSON.stringify(data.usage || {})}`,
+      );
 
       let cleaned = content.trim();
       if (cleaned.startsWith("```")) {
-        cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+        cleaned = cleaned
+          .replace(/^```(?:json)?\n?/, "")
+          .replace(/\n?```$/, "");
       }
 
       const parsed = JSON.parse(cleaned);
-      console.log(`[trigger-analysis] [${schemaKey}] ✅ parsed keys=${Object.keys(parsed).join(",")}`);
+      console.log(
+        `[trigger-analysis] [${schemaKey}] ✅ parsed keys=${Object.keys(parsed).join(",")}`,
+      );
       return { model: currentModel, data: parsed };
     } catch (e) {
-      console.error(`[trigger-analysis] [${schemaKey}] exception retry=${retry}:`, e);
-      if (e instanceof SyntaxError && (attempt + 1) < models.length) {
-        return callLLMWithRetry(schemaKey, schema, context, event, models, attempt + 1);
+      console.error(
+        `[trigger-analysis] [${schemaKey}] exception retry=${retry}:`,
+        e,
+      );
+      if (e instanceof SyntaxError && attempt + 1 < models.length) {
+        return callLLMWithRetry(
+          schemaKey,
+          schema,
+          context,
+          event,
+          models,
+          attempt + 1,
+        );
       }
       await delay(RETRY_DELAY_MS * (retry + 1));
     }
   }
 
-  if ((attempt + 1) < models.length) {
-    return callLLMWithRetry(schemaKey, schema, context, event, models, attempt + 1);
+  if (attempt + 1 < models.length) {
+    return callLLMWithRetry(
+      schemaKey,
+      schema,
+      context,
+      event,
+      models,
+      attempt + 1,
+    );
   }
-  throw new Error(`LLM failed for ${schemaKey} after all retries and fallbacks`);
+  throw new Error(
+    `LLM failed for ${schemaKey} after all retries and fallbacks`,
+  );
 }
 
 // ============================================================================
@@ -186,10 +253,16 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     const body = await req.json();
-    console.log(`[trigger-analysis] body:`, JSON.stringify({
-      conflict_id: body.conflict_id, title: body.title, date: body.date,
-      category: body.category, significance: body.significance,
-    }));
+    console.log(
+      `[trigger-analysis] body:`,
+      JSON.stringify({
+        conflict_id: body.conflict_id,
+        title: body.title,
+        date: body.date,
+        category: body.category,
+        significance: body.significance,
+      }),
+    );
 
     // ---------------------------------------------------------------
     // 1. Fetch conflict + actors + recent events dynamically
@@ -216,7 +289,9 @@ serve(async (req) => {
       interests: a.interests || [],
       red_lines: a.red_lines || [],
     }));
-    console.log(`[trigger-analysis] Actors: ${actors.map(a => a.name).join(", ")}`);
+    console.log(
+      `[trigger-analysis] Actors: ${actors.map((a) => a.name).join(", ")}`,
+    );
 
     const { data: existingEvents } = await supabase
       .from("timeline_events")
@@ -242,9 +317,12 @@ serve(async (req) => {
     // 3. Run all 4 LLM calls in parallel
     // ---------------------------------------------------------------
     console.log("[trigger-analysis] Starting 4 parallel LLM calls...");
-    const [briefingResult, impactResult, causalGraphResult, pathwaysResult] = await Promise.all(
-      Object.keys(schemas).map(key => callLLMWithRetry(key, schemas[key], context, eventStr, models))
-    );
+    const [briefingResult, impactResult, causalGraphResult, pathwaysResult] =
+      await Promise.all(
+        Object.keys(schemas).map((key) =>
+          callLLMWithRetry(key, schemas[key], context, eventStr, models),
+        ),
+      );
     console.log("[trigger-analysis] All LLM calls succeeded");
 
     // ---------------------------------------------------------------
@@ -252,7 +330,9 @@ serve(async (req) => {
     // ---------------------------------------------------------------
     const sources = body.sources
       ? Array.isArray(body.sources)
-        ? body.sources.map((s: any) => typeof s === "string" ? { name: s } : s)
+        ? body.sources.map((s: any) =>
+            typeof s === "string" ? { name: s } : s,
+          )
         : body.sources
       : null;
 
@@ -275,10 +355,16 @@ serve(async (req) => {
 
     if (eventError) {
       console.error("[trigger-analysis] Event insert failed:", eventError);
-      return new Response(JSON.stringify({ error: "Event insert failed", details: eventError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Event insert failed",
+          details: eventError.message,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
     console.log(`[trigger-analysis] Event created: ${event.id}`);
 
@@ -299,19 +385,35 @@ serve(async (req) => {
         impact: impactResult.data,
         causal_graph: causalGraphResult.data,
         pathways: pathwaysResult.data,
-        model_version: [briefingResult, impactResult, causalGraphResult, pathwaysResult]
-          .map(r => r.model).join("/"),
+        model_version: [
+          briefingResult,
+          impactResult,
+          causalGraphResult,
+          pathwaysResult,
+        ]
+          .map((r) => r.model)
+          .join("/"),
         is_latest: true,
       })
       .select()
       .single();
 
     if (snapshotError) {
-      console.error("[trigger-analysis] Snapshot insert failed:", snapshotError);
-      return new Response(JSON.stringify({ error: "Snapshot insert failed", event_id: event.id, details: snapshotError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error(
+        "[trigger-analysis] Snapshot insert failed:",
+        snapshotError,
+      );
+      return new Response(
+        JSON.stringify({
+          error: "Snapshot insert failed",
+          event_id: event.id,
+          details: snapshotError.message,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     console.log(`[trigger-analysis] ✅ Complete. snapshot=${snapshot?.id}`);
@@ -320,7 +422,7 @@ serve(async (req) => {
         success: true,
         event_id: event.id,
         snapshot_id: snapshot?.id,
-        actors: actors.map(a => a.name),
+        actors: actors.map((a) => a.name),
         models_used: {
           briefing: briefingResult.model,
           impact: impactResult.model,
@@ -337,7 +439,10 @@ serve(async (req) => {
         error: e instanceof Error ? e.message : "Unknown error",
         stack: e instanceof Error ? e.stack : undefined,
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

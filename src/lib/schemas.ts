@@ -1,5 +1,5 @@
 /**
- * OGSE — Open Geopolitical Simulation Engine
+ * OGI — Open Geopolitical Intelligence
  * Core type definitions — fully dynamic for N actors and N conflicts
  */
 
@@ -7,16 +7,37 @@
 // ENUMS
 // ============================================================================
 
-export type ConflictStatus = 'escalating' | 'de-escalating' | 'stable' | 'frozen' | 'stalemate' | 'active';
-export type ConflictCategory = 'hybrid' | 'military' | 'economic' | 'proxy' | 'cyber' | 'diplomatic';
-export type EventSignificance = 'critical' | 'high' | 'medium' | 'low';
-export type EventCategory = 'military' | 'diplomatic' | 'economic' | 'political';
-export type ConfidenceLevel = 'high' | 'medium' | 'low';
-export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type ActorRole = 'primary' | 'secondary' | 'proxy' | 'mediator';
-export type CausalNodeCategory = 'actor' | 'event' | 'effect' | 'variable';
-export type CausalEdgeStrength = 'strong' | 'moderate' | 'weak';
-export type TrendDirection = 'up' | 'down' | 'stable' | 'increasing' | 'decreasing';
+export type ConflictStatus =
+  | "escalating"
+  | "de-escalating"
+  | "stable"
+  | "frozen"
+  | "stalemate"
+  | "active";
+export type ConflictCategory =
+  | "hybrid"
+  | "military"
+  | "economic"
+  | "proxy"
+  | "cyber"
+  | "diplomatic";
+export type EventSignificance = "critical" | "high" | "medium" | "low";
+export type EventCategory =
+  | "military"
+  | "diplomatic"
+  | "economic"
+  | "political";
+export type ConfidenceLevel = "high" | "medium" | "low";
+export type RiskLevel = "low" | "medium" | "high" | "critical";
+export type ActorRole = "primary" | "secondary" | "proxy" | "mediator";
+export type CausalNodeCategory = "actor" | "event" | "effect" | "variable";
+export type CausalEdgeStrength = "strong" | "moderate" | "weak";
+export type TrendDirection =
+  | "up"
+  | "down"
+  | "stable"
+  | "increasing"
+  | "decreasing";
 
 // ============================================================================
 // CORE ENTITY INTERFACES
@@ -87,7 +108,7 @@ export interface EconomicMeasures {
 
 export interface DiplomaticChannel {
   name: string;
-  status: 'active' | 'cold' | 'suspended' | 'broken' | 'unknown';
+  status: "active" | "cold" | "suspended" | "broken" | "unknown";
   last_contact?: string;
 }
 
@@ -205,7 +226,10 @@ export interface AnalysisSnapshot {
 export interface ConflictHeaderProps {
   conflict: Conflict;
   snapshot: AnalysisSnapshot | null;
-  snapshotHistory: Pick<AnalysisSnapshot, 'id' | 'created_at' | 'triggered_by_event_id'>[];
+  snapshotHistory: Pick<
+    AnalysisSnapshot,
+    "id" | "created_at" | "triggered_by_event_id"
+  >[];
   events: TimelineEvent[];
 }
 
@@ -260,10 +284,10 @@ export interface TimelineEventSeedData {
 // ============================================================================
 
 export const CAUSAL_NODE_COLORS: Record<CausalNodeCategory, string> = {
-  actor: '#e8c547',
-  event: '#ff4444',
-  effect: '#4488ff',
-  variable: '#888899',
+  actor: "#e8c547",
+  event: "#ff4444",
+  effect: "#4488ff",
+  variable: "#888899",
 };
 
 export const CAUSAL_NODE_RADIUS: Record<CausalNodeCategory, number> = {
@@ -274,10 +298,10 @@ export const CAUSAL_NODE_RADIUS: Record<CausalNodeCategory, number> = {
 };
 
 export const RISK_COLORS: Record<RiskLevel, string> = {
-  low: 'text-og-green bg-[rgba(68,255,136,0.12)]',
-  medium: 'text-accent-color bg-accent-dim',
-  high: 'text-[hsl(30,100%,60%)] bg-[rgba(255,140,0,0.12)]',
-  critical: 'text-red-vivid bg-red-dim',
+  low: "text-og-green bg-[rgba(68,255,136,0.12)]",
+  medium: "text-accent-color bg-accent-dim",
+  high: "text-[hsl(30,100%,60%)] bg-[rgba(255,140,0,0.12)]",
+  critical: "text-red-vivid bg-red-dim",
 };
 
 export const EVENT_SIZE_MAP: Record<EventSignificance, number> = {
@@ -288,10 +312,10 @@ export const EVENT_SIZE_MAP: Record<EventSignificance, number> = {
 };
 
 export const EVENT_COLOR_MAP: Record<EventCategory, string> = {
-  military: 'hsl(var(--red-vivid))',
-  diplomatic: 'hsl(var(--blue-vivid))',
-  economic: 'hsl(var(--accent))',
-  political: 'hsl(270,100%,63%)',
+  military: "hsl(var(--red-vivid))",
+  diplomatic: "hsl(var(--blue-vivid))",
+  economic: "hsl(var(--accent))",
+  political: "hsl(270,100%,63%)",
 };
 
 // ============================================================================
@@ -299,15 +323,18 @@ export const EVENT_COLOR_MAP: Record<EventCategory, string> = {
 // ============================================================================
 
 export function actorSlug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 /** Check if an impact metric key is a "domestic stability" metric (reversed scoring) */
 export function isReversedMetric(key: string): boolean {
-  return key.startsWith('domestic_stability');
+  return key.startsWith("domestic_stability");
 }
 
 /** Pretty-print a metric key */
 export function metricLabel(key: string): string {
-  return key.replace(/_/g, ' ').toUpperCase();
+  return key.replace(/_/g, " ").toUpperCase();
 }

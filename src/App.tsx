@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import ConflictPage from "./pages/ConflictPage";
 import AdminPage from "./pages/AdminPage";
+import ManifestPage from "./pages/ManifestPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/conflict/:id" element={<ConflictPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/manifest" element={<ManifestPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>

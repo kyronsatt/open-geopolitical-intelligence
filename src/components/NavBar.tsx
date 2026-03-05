@@ -5,6 +5,9 @@ interface NavBarProps {
   conflictId?: string | null;
 }
 
+const GITHUB_URL =
+  "https://github.com/kyronsatt/open-geopolitical-intelligence";
+
 const NavBar = ({ conflictId }: NavBarProps) => {
   const navigate = useNavigate();
 
@@ -24,22 +27,31 @@ const NavBar = ({ conflictId }: NavBarProps) => {
         className="flex items-center gap-3 cursor-pointer"
         onClick={() => navigate("/")}
       >
-        <span className="font-display text-xl font-extrabold tracking-tight text-foreground">
-          OGI
+        <span className="font-mono uppercase text-xl font-extrabold tracking-tight text-foreground">
+          Open Geopolitical Intelligence
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-og-green animate-pulse-glow" />
           <span className="font-mono-label text-og-green">LIVE</span>
         </span>
       </div>
-      {conflictId && (
+
+      <div className="flex items-center gap-3">
         <button
-          onClick={() => navigate(`/conflict/${conflictId}`)}
+          onClick={() => navigate("/manifest")}
           className="font-mono-label px-4 py-2 rounded-lg border border-border text-foreground hover:bg-[hsl(var(--bg-glass-hover))] transition-all"
         >
-          ENTER SITUATION ROOM →
+          MANIFEST
         </button>
-      )}
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono-label px-4 py-2 rounded-lg border border-border text-foreground hover:bg-[hsl(var(--bg-glass-hover))] transition-all"
+        >
+          CONTRIBUTE
+        </a>
+      </div>
     </motion.nav>
   );
 };
