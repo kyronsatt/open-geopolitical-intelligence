@@ -1,70 +1,32 @@
 /**
- * OGI - Open Geopolitical Intelligence
- * Core type definitions for the application
- * 
- * This file contains all the type definitions for:
- * - Supabase database tables
- * - AI-generated analysis structures (briefing, causal graph, impact, pathways)
- * - Component props and state types
+ * OGSE — Open Geopolitical Simulation Engine
+ * Core type definitions — fully dynamic for N actors and N conflicts
  */
 
 // ============================================================================
 // ENUMS
 // ============================================================================
 
-/** Conflict status categories */
-export type ConflictStatus = 
-  | 'escalating' 
-  | 'de-escalating' 
-  | 'stable' 
-  | 'frozen' 
-  | 'stalemate'
-  | 'active';
-
-/** Conflict category types */
-export type ConflictCategory = 
-  | 'hybrid' 
-  | 'military' 
-  | 'economic' 
-  | 'proxy' 
-  | 'cyber' 
-  | 'diplomatic';
-
-/** Timeline event significance levels */
+export type ConflictStatus = 'escalating' | 'de-escalating' | 'stable' | 'frozen' | 'stalemate' | 'active';
+export type ConflictCategory = 'hybrid' | 'military' | 'economic' | 'proxy' | 'cyber' | 'diplomatic';
 export type EventSignificance = 'critical' | 'high' | 'medium' | 'low';
-
-/** Timeline event categories */
 export type EventCategory = 'military' | 'diplomatic' | 'economic' | 'political';
-
-/** Confidence levels for AI analysis */
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
-
-/** Risk levels for policy pathways */
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-
-/** Actor roles in a conflict */
 export type ActorRole = 'primary' | 'secondary' | 'proxy' | 'mediator';
-
-/** Causal graph node categories */
 export type CausalNodeCategory = 'actor' | 'event' | 'effect' | 'variable';
-
-/** Causal edge strength */
 export type CausalEdgeStrength = 'strong' | 'moderate' | 'weak';
-
-/** Trend direction for metrics */
 export type TrendDirection = 'up' | 'down' | 'stable' | 'increasing' | 'decreasing';
 
 // ============================================================================
 // CORE ENTITY INTERFACES
 // ============================================================================
 
-/** A source reference for events or analysis */
 export interface Source {
   name: string;
   url?: string;
 }
 
-/** An actor (country, organization, group) involved in a conflict */
 export interface ConflictActor {
   name: string;
   role: ActorRole;
@@ -78,13 +40,12 @@ export interface ConflictActor {
 // SUPABASE TABLE ROWS
 // ============================================================================
 
-/** Database row for conflicts table */
 export interface Conflict {
   id: string;
   name: string;
   category: ConflictCategory;
   status: ConflictStatus;
-  intensity: number; // 0-1 scale
+  intensity: number;
   summary: string | null;
   tags: string[] | null;
   actors: ConflictActor[];
@@ -92,31 +53,6 @@ export interface Conflict {
   created_at: string | null;
 }
 
-/** Insert payload for conflicts */
-export interface ConflictInsert {
-  name: string;
-  category: ConflictCategory;
-  status: ConflictStatus;
-  intensity: number;
-  summary?: string | null;
-  tags?: string[] | null;
-  actors: ConflictActor;
-  start_date?: string | null;
-}
-
-/** Update payload for conflicts */
-export interface ConflictUpdate {
-  name?: string;
-  category?: ConflictCategory;
-  status?: ConflictStatus;
-  intensity?: number;
-  summary?: string | null;
-  tags?: string[] | null;
-  actors?: ConflictActor[];
-  start_date?: string | null;
-}
-
-/** Database row for timeline_events table */
 export interface TimelineEvent {
   id: string;
   conflict_id: string | null;
@@ -129,40 +65,19 @@ export interface TimelineEvent {
   created_at: string | null;
 }
 
-/** Insert payload for timeline_events */
-export interface TimelineEventInsert {
-  conflict_id?: string | null;
-  title: string;
-  description: string;
-  date: string;
-  category: EventCategory;
-  significance: EventSignificance;
-  sources?: Source[] | null;
-}
-
-/** Update payload for timeline_events */
-export interface TimelineEventUpdate {
-  title?: string;
-  description?: string;
-  date?: string;
-  category?: EventCategory;
-  significance?: EventSignificance;
-  sources?: Source[] | null;
-}
-
 // ============================================================================
-// AI-GENERATED ANALYSIS STRUCTURES
+// AI-GENERATED ANALYSIS — FULLY DYNAMIC
 // ============================================================================
 
-/** Military posture information for a side */
+/** Military posture for any actor */
 export interface MilitaryPosture {
   current_posture: string;
   recent_actions: string[];
+  stated_objectives?: string[];
   deployments?: string[];
   readiness_level?: string;
 }
 
-/** Economic measures and sanctions information */
 export interface EconomicMeasures {
   active_sanctions: string[];
   trade_impact: string;
@@ -170,76 +85,43 @@ export interface EconomicMeasures {
   energy_sector_impact?: string;
 }
 
-/** Diplomatic channel status */
 export interface DiplomaticChannel {
   name: string;
-  status: 'active' | 'cold' | 'suspended' | 'unknown';
+  status: 'active' | 'cold' | 'suspended' | 'broken' | 'unknown';
   last_contact?: string;
 }
 
-/** Diplomatic status information */
 export interface DiplomaticStatus {
   current_tone: string;
-  active_channels: DiplomaticChannel[];
+  active_channels: (DiplomaticChannel | string)[];
   third_party_mediators: string[];
   negotiation_status?: string;
 }
 
-/** Internal political pressure information */
 export interface InternalPressure {
-  pressure_level: number; // 0-100
+  pressure_level: number;
   political_pressure?: string;
   regime_stability?: string;
   economic_grievances?: string[];
   public_sentiment?: string;
 }
 
-/** Complete briefing structure generated by AI */
+/** Briefing — dynamic: military_posture and internal_pressure are keyed by actor slug */
 export interface Briefing {
   summary: string;
   confidence_level: ConfidenceLevel;
-  military_posture: {
-    usa?: MilitaryPosture;
-    iran?: MilitaryPosture;
-    [key: string]: MilitaryPosture | undefined;
-  };
+  confidence_reasoning?: string;
+  military_posture: Record<string, MilitaryPosture>;
   economic_measures: EconomicMeasures;
   diplomatic_status: DiplomaticStatus;
-  internal_pressure: {
-    usa?: InternalPressure;
-    iran?: InternalPressure;
-    [key: string]: InternalPressure | undefined;
-  };
+  internal_pressure: Record<string, InternalPressure>;
   key_developments?: string[];
   strategic_insights?: string[];
 }
 
-/** A node in the causal graph */
-export interface CausalNode {
-  id: string;
-  label: string;
-  description: string;
-  category: CausalNodeCategory;
-}
-
-/** An edge in the causal graph */
-export interface CausalEdge {
-  id?: string;
-  source: string;
-  target: string;
-  strength: CausalEdgeStrength;
-  description?: string;
-}
-
-/** Complete causal graph structure */
-export interface CausalGraph {
-  nodes: CausalNode[];
-  edges: CausalEdge[];
-}
-
-/** Impact metric data point */
+/** A single impact metric */
 export interface ImpactMetric {
-  score: number; // 0-100
+  score: number;
   trend: TrendDirection;
   confidence_low?: number;
   confidence_high?: number;
@@ -247,28 +129,45 @@ export interface ImpactMetric {
   primary_channels?: string[];
   mechanisms?: string[];
   stressed_alliances?: string[];
-  [key: string]: unknown; // Allow additional fields
+  affected_countries?: string[];
+  oil_price_impact?: string;
+  strait_of_hormuz_risk?: number;
+  [key: string]: unknown;
 }
 
-/** Complete impact assessment structure */
-export interface ImpactAssessment {
-  domestic_stability_usa: ImpactMetric;
-  domestic_stability_iran: ImpactMetric;
-  regional_destabilization: ImpactMetric;
-  global_economic_shock: ImpactMetric;
-  energy_market_disruption: ImpactMetric;
-  alliance_stress: ImpactMetric;
-  [key: string]: ImpactMetric | undefined;
+/**
+ * Impact assessment — fully dynamic.
+ * Keys are generated by the LLM based on actors involved.
+ * e.g. domestic_stability_usa, domestic_stability_iran, regional_destabilization, etc.
+ */
+export type ImpactAssessment = Record<string, ImpactMetric>;
+
+export interface CausalNode {
+  id: string;
+  label: string;
+  description: string;
+  category: CausalNodeCategory;
 }
 
-/** Required actions for a pathway */
-/** Dynamic pathway actions - supports any number of actors */
+export interface CausalEdge {
+  id?: string;
+  source: string;
+  target: string;
+  strength: CausalEdgeStrength;
+  description?: string;
+  relationship?: string;
+}
+
+export interface CausalGraph {
+  nodes: CausalNode[];
+  edges: CausalEdge[];
+}
+
+/** Dynamic pathway actions keyed by actor */
 export interface PathwayActions {
-  international_community?: string[];
   [actor: string]: string[] | undefined;
 }
 
-/** A policy pathway simulation */
 export interface PolicyPathway {
   id: string;
   name: string;
@@ -286,14 +185,6 @@ export interface PolicyPathway {
   warning_indicators?: string[];
 }
 
-/** Complete pathways structure */
-export interface PolicyPathways {
-  pathways: PolicyPathway[];
-  scenario_analysis?: string;
-  key_uncertainties?: string[];
-}
-
-/** Complete analysis snapshot from AI */
 export interface AnalysisSnapshot {
   id: string;
   conflict_id: string | null;
@@ -307,33 +198,10 @@ export interface AnalysisSnapshot {
   created_at: string | null;
 }
 
-/** Insert payload for analysis_snapshots */
-export interface AnalysisSnapshotInsert {
-  conflict_id?: string | null;
-  triggered_by_event_id?: string | null;
-  briefing?: Briefing | null;
-  causal_graph?: CausalGraph | null;
-  pathways?: PolicyPathway[] | null;
-  impact?: ImpactAssessment | null;
-  is_latest?: boolean | null;
-  model_version?: string | null;
-}
-
-/** Update payload for analysis_snapshots */
-export interface AnalysisSnapshotUpdate {
-  briefing?: Briefing | null;
-  causal_graph?: CausalGraph | null;
-  pathways?: PolicyPathway[] | null;
-  impact?: ImpactAssessment | null;
-  is_latest?: boolean | null;
-  model_version?: string | null;
-}
-
 // ============================================================================
-// COMPONENT-SPECIFIC TYPES
+// COMPONENT PROPS
 // ============================================================================
 
-/** Props for ConflictHeader component */
 export interface ConflictHeaderProps {
   conflict: Conflict;
   snapshot: AnalysisSnapshot | null;
@@ -341,27 +209,24 @@ export interface ConflictHeaderProps {
   events: TimelineEvent[];
 }
 
-/** Props for BriefingPanel component */
 export interface BriefingPanelProps {
   snapshot: AnalysisSnapshot | null;
+  actors?: ConflictActor[];
 }
 
-/** Props for ImpactMetrics component */
 export interface ImpactMetricsProps {
   snapshot: AnalysisSnapshot | null;
+  actors?: ConflictActor[];
 }
 
-/** Props for TimelineView component */
 export interface TimelineViewProps {
   events: TimelineEvent[];
 }
 
-/** Props for CausalGraphView component */
 export interface CausalGraphViewProps {
   snapshot: AnalysisSnapshot | null;
 }
 
-/** Props for PathwayExplorer component */
 export interface PathwayExplorerProps {
   snapshot: AnalysisSnapshot | null;
 }
@@ -370,7 +235,6 @@ export interface PathwayExplorerProps {
 // SEED DATA TYPES
 // ============================================================================
 
-/** Seed data for conflicts (used in seed.ts) */
 export interface ConflictSeedData {
   name: string;
   category: ConflictCategory;
@@ -382,7 +246,6 @@ export interface ConflictSeedData {
   actors: ConflictActor[];
 }
 
-/** Seed data for timeline events */
 export interface TimelineEventSeedData {
   date: string;
   title: string;
@@ -393,81 +256,9 @@ export interface TimelineEventSeedData {
 }
 
 // ============================================================================
-// API RESPONSE TYPES
-// ============================================================================
-
-/** Standard API response wrapper */
-export interface ApiResponse<T> {
-  data: T | null;
-  error: string | null;
-}
-
-/** Paginated response */
-export interface PaginatedResponse<T> {
-  data: T[];
-  count: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
-
-/** Supabase query result */
-export interface SupabaseQueryResult<T> {
-  data: T | null;
-  error: Error | null;
-  count: number | null;
-}
-
-// ============================================================================
-// UTILITY TYPES
-// ============================================================================
-
-/** Make all properties optional recursively */
-export type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
-};
-
-/** Extract row type from table */
-export type RowType<T> = T extends { Row: infer R } ? R : never;
-
-/** Extract insert type from table */
-export type InsertType<T> = T extends { Insert: infer I } ? I : never;
-
-/** Extract update type from table */
-export type UpdateType<T> = T extends { Update: infer U } ? U : never;
-
-// ============================================================================
-// DISPLAY HELPER TYPES
-// ============================================================================
-
-/** Status badge configuration */
-export interface StatusBadge {
-  label: string;
-  className: string;
-}
-
-/** Type badge configuration */
-export interface TypeBadge {
-  label: string;
-  icon?: React.ComponentType<{ className?: string }>;
-}
-
-/** Intensity level information */
-export interface IntensityInfo {
-  level: string;
-  pct: number;
-  color: string;
-  bg: string;
-}
-
-/** Risk color mapping */
-export type RiskColorMap = Record<RiskLevel, string>;
-
-// ============================================================================
 // CONSTANTS
 // ============================================================================
 
-/** Node colors for causal graph */
 export const CAUSAL_NODE_COLORS: Record<CausalNodeCategory, string> = {
   actor: '#e8c547',
   event: '#ff4444',
@@ -475,7 +266,6 @@ export const CAUSAL_NODE_COLORS: Record<CausalNodeCategory, string> = {
   variable: '#888899',
 };
 
-/** Node radius sizes for causal graph */
 export const CAUSAL_NODE_RADIUS: Record<CausalNodeCategory, number> = {
   actor: 18,
   event: 12,
@@ -483,15 +273,13 @@ export const CAUSAL_NODE_RADIUS: Record<CausalNodeCategory, number> = {
   variable: 8,
 };
 
-/** Risk color mapping */
-export const RISK_COLORS: RiskColorMap = {
+export const RISK_COLORS: Record<RiskLevel, string> = {
   low: 'text-og-green bg-[rgba(68,255,136,0.12)]',
   medium: 'text-accent-color bg-accent-dim',
   high: 'text-[hsl(30,100%,60%)] bg-[rgba(255,140,0,0.12)]',
   critical: 'text-red-vivid bg-red-dim',
 };
 
-/** Event significance to size mapping */
 export const EVENT_SIZE_MAP: Record<EventSignificance, number> = {
   critical: 16,
   high: 12,
@@ -499,10 +287,27 @@ export const EVENT_SIZE_MAP: Record<EventSignificance, number> = {
   low: 6,
 };
 
-/** Event category to color mapping */
 export const EVENT_COLOR_MAP: Record<EventCategory, string> = {
   military: 'hsl(var(--red-vivid))',
   diplomatic: 'hsl(var(--blue-vivid))',
   economic: 'hsl(var(--accent))',
   political: 'hsl(270,100%,63%)',
 };
+
+// ============================================================================
+// UTILITY: derive a slug from actor name for keying
+// ============================================================================
+
+export function actorSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+/** Check if an impact metric key is a "domestic stability" metric (reversed scoring) */
+export function isReversedMetric(key: string): boolean {
+  return key.startsWith('domestic_stability');
+}
+
+/** Pretty-print a metric key */
+export function metricLabel(key: string): string {
+  return key.replace(/_/g, ' ').toUpperCase();
+}

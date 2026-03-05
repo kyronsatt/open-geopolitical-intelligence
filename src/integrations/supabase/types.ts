@@ -1,13 +1,3 @@
-import type { 
-  Conflict, 
-  TimelineEvent, 
-  AnalysisSnapshot 
-} from '@/lib/schemas';
-
-// Re-export the schema types for use throughout the app
-export type { Conflict, TimelineEvent, AnalysisSnapshot };
-
-// Legacy JSON type for backward compatibility
 export type Json =
   | string
   | number
